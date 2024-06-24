@@ -5,6 +5,11 @@ from pydantic import ConfigDict, field_validator, EmailStr
 
 
 class Settings(BaseSettings):
+    PG_DB:str
+    PG_USER: str
+    PG_PASSWORD: str
+    PG_PORT: int
+    PG_DOMAIN: str
     DB_URL: str = "postgresql+asyncpg://postgres:7703@localhost:5432/postgres_rest_app"
     SECRET_KEY_JWT: str = "secret_key"
     ALGORITHM: str = "HS256"
