@@ -1,0 +1,230 @@
+Index: src/database/db.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import contextlib\r\n\r\nfrom sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine\r\nfrom sqlalchemy.ext.declarative import declarative_base\r\n\r\nfrom src.conf.config import config\r\n\r\nfrom sqlalchemy.orm import sessionmaker\r\n\r\nDATABASE_URL = config.DB_URL\r\n\r\nengine = create_async_engine(DATABASE_URL, echo=True)\r\nSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession)\r\nBase = declarative_base()\r\n\r\n\r\nclass DatabaseSessionManager:\r\n    def __init__(self, url: str):\r\n        self._engine: AsyncEngine | None = create_async_engine(url)\r\n        self._session_maker: async_sessionmaker = async_sessionmaker(autoflush=False, autocommit=False,\r\n                                                                     bind=self._engine)\r\n\r\n    @contextlib.asynccontextmanager\r\n    async def session(self):\r\n        \"\"\"\r\n        The session function is a context manager that provides a transactional scope around a series of operations.\r\n        It will automatically rollback the session if an exception occurs, or commit the session otherwise.\r\n        \r\n        :param self: Represent the instance of the class\r\n        :return: A context manager\r\n        :doc-author: Trelent\r\n        \"\"\"\r\n        if self._session_maker is None:\r\n            raise Exception(\"Session is not initialized\")\r\n        session = self._session_maker()\r\n        try:\r\n            yield session\r\n        except Exception as err:\r\n            print(err)\r\n            await session.rollback()\r\n            raise \r\n        finally:\r\n            await session.close()\r\n\r\n\r\nsessionmanager = DatabaseSessionManager(config.DB_URL)\r\n\r\n\r\nasync def get_db():\r\n    \"\"\"\r\n    The get_db function is a coroutine that returns an async context manager.\r\n    The context manager yields a database session, which can be used to query the database.\r\n    When the block of code exits, the session is automatically closed.\r\n    \r\n    :return: A generator object\r\n    :doc-author: Trelent\r\n    \"\"\"\r\n    async with sessionmanager.session() as session:\r\n        yield session
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/database/db.py b/src/database/db.py
+--- a/src/database/db.py	
++++ b/src/database/db.py	
+@@ -10,7 +10,7 @@
+ DATABASE_URL = config.DB_URL
+ 
+ engine = create_async_engine(DATABASE_URL, echo=True)
+-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession)
++AsyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession, expire_on_commit=False)
+ Base = declarative_base()
+ 
+ 
+@@ -55,5 +55,5 @@
+     :return: A generator object
+     :doc-author: Trelent
+     """
+-    async with sessionmanager.session() as session:
++    async with AsyncSessionLocal() as session:
+         yield session
+\ No newline at end of file
+Index: src/repository/photos.py
+===================================================================
+diff --git a/src/repository/photos.py b/src/repository/photos.py
+new file mode 100644
+--- /dev/null	
++++ b/src/repository/photos.py	
+@@ -0,0 +1,25 @@
++from sqlalchemy.future import select
++from sqlalchemy.ext.asyncio import AsyncSession
++from sqlalchemy.orm import Session
++from src.entity.models import Photo
++
++
++async def delete_photo(db: AsyncSession, photo_id: int) -> None:
++    result = await db.execute(select(Photo).filter(Photo.id == photo_id))
++    photo = result.scalar_one_or_none()
++    if photo:
++        await db.delete(photo)
++        await db.commit()
++    else:
++        raise ValueError("Photo not found")
++
++
++def update_photo_description(db: Session, photo_id: int, description: str) -> Photo:
++    photo = db.query(Photo).filter(Photo.id == photo_id).first()
++    if photo:
++        photo.description = description
++        db.commit()
++        db.refresh(photo)
++        return photo
++    else:
++        raise ValueError("Photo not found")
+Index: src/entity/models.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from datetime import date\r\nfrom sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase\r\nfrom sqlalchemy import Column, Integer, String, Date, ForeignKey, DateTime, func, Boolean\r\nfrom typing import Optional\r\n\r\n\r\nclass Base(DeclarativeBase):\r\n    pass\r\n\r\n\r\nclass Contact(Base):\r\n    __tablename__ = \"contacts\"\r\n    id: Mapped[int] = mapped_column(Integer, primary_key=True)\r\n    first_name: Mapped[str] = mapped_column(String(50), nullable=False)\r\n    last_name: Mapped[str] = mapped_column(String(50), nullable=False)\r\n    email: Mapped[str] = mapped_column(String(50), unique=True, index=True)\r\n    phone: Mapped[str] = mapped_column(String(20), nullable=False)\r\n    birthday: Mapped[Date] = mapped_column(Date, nullable=False)\r\n    additional_info: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)\r\n    created_at: Mapped[date] = mapped_column('created_at', DateTime, default=func.now(),\r\n                                             nullable=True)\r\n    updated_at: Mapped[date] = mapped_column('updated_at', DateTime, default=func.now(),\r\n                                             onupdate=func.now(),\r\n                                             nullable=True)\r\n\r\n    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), nullable=True)\r\n    user: Mapped[\"User\"] = relationship(\"User\", backref=\"contacts\", lazy=\"joined\")\r\n\r\n\r\nclass User(Base):\r\n    __tablename__ = 'users'\r\n    id: Mapped[int] = mapped_column(primary_key=True)\r\n    username: Mapped[str] = mapped_column(String(50))\r\n    email: Mapped[str] = mapped_column(String(150), nullable=False, unique=True)\r\n    password: Mapped[str] = mapped_column(String(255), nullable=False)\r\n    avatar: Mapped[str] = mapped_column(String(255), nullable=True)\r\n    refresh_token: Mapped[str] = mapped_column(String(255), nullable=True)\r\n    created_at: Mapped[date] = mapped_column('created_at', DateTime, default=func.now())\r\n    updated_at: Mapped[date] = mapped_column('updated_at', DateTime, default=func.now(),\r\n                                             onupdate=func.now())\r\n    confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=True)\r\n    photos = relationship(\"Photo\", back_populates=\"user\")\r\n\r\n\r\nclass Photo(Base):\r\n    __tablename__ = \"photos\"\r\n    id = Column(Integer, primary_key=True, index=True)\r\n    url = Column(String, index=True)\r\n    description = Column(String)\r\n    created_at = Column(DateTime, default=func.now())\r\n    user_id = Column(Integer, ForeignKey('users.id'))\r\n\r\n    user = relationship(\"User\", back_populates=\"photos\")\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/entity/models.py b/src/entity/models.py
+--- a/src/entity/models.py	
++++ b/src/entity/models.py	
+@@ -1,6 +1,6 @@
+ from datetime import date
+ from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
+-from sqlalchemy import Column, Integer, String, Date, ForeignKey, DateTime, func, Boolean
++from sqlalchemy import Column, Integer, String, Date, ForeignKey, DateTime, func, Boolean, Table
+ from typing import Optional
+ 
+ 
+@@ -42,6 +42,12 @@
+     photos = relationship("Photo", back_populates="user")
+ 
+ 
++photo_tags = Table(
++    "photo_tags",
++    Base.metadata,
++    Column("photo_id", Integer, ForeignKey("photos.id", ondelete="CASCADE"),),
++    Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True))
++
+ class Photo(Base):
+     __tablename__ = "photos"
+     id = Column(Integer, primary_key=True, index=True)
+@@ -51,3 +57,14 @@
+     user_id = Column(Integer, ForeignKey('users.id'))
+ 
+     user = relationship("User", back_populates="photos")
++
++    tags = relationship("Tag", secondary=photo_tags, back_populates="photos")
++
++
++class Tag(Base):
++    __tablename__ = "tags"
++    id = Column(Integer, primary_key=True, index=True)
++    name = Column(String, unique=True, index=True)
++
++    photos = relationship("Photo", secondary=photo_tags, back_populates="tags")
++
+Index: src/repository/tags.py
+===================================================================
+diff --git a/src/repository/tags.py b/src/repository/tags.py
+new file mode 100644
+--- /dev/null	
++++ b/src/repository/tags.py	
+@@ -0,0 +1,10 @@
++from sqlalchemy.orm import Session
++from src.entity.models import Tag
++
++def get_or_create_tag(db: Session, name: str) -> Tag:
++    tag = db.query(Tag).filter(Tag.name == name).first()
++    if not tag:
++        tag = Tag(name=name)
++        db.add(tag)
++        db.commit()
++    return tag
+Index: postgres-data/postmaster.pid
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>1\r\n/var/lib/postgresql/data\r\n1719520341\r\n5432\r\n/var/run/postgresql\r\n*\r\n   113400         0\r\nready   \r\n
+===================================================================
+diff --git a/postgres-data/postmaster.pid b/postgres-data/postmaster.pid
+--- a/postgres-data/postmaster.pid	
++++ b/postgres-data/postmaster.pid	
+@@ -1,6 +1,6 @@
+ 1
+ /var/lib/postgresql/data
+-1719520341
++1719598008
+ 5432
+ /var/run/postgresql
+ *
+Index: src/routes/photos.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from fastapi import APIRouter, HTTPException, Depends, UploadFile, File\r\nfrom sqlalchemy.ext.asyncio import AsyncSession\r\nimport shutil\r\n\r\nfrom src.database.db import get_db\r\nfrom src.entity.models import Photo as PhotoModel\r\nfrom src.schemas.photo import Photo, PhotoCreate\r\nfrom src.services.auth import auth_service\r\nfrom src.entity.models import User\r\n\r\nrouter = APIRouter(prefix=\"/photos\", tags=[\"photos\"])\r\n\r\n\r\n@router.post(\"/\", response_model=Photo)\r\nasync def upload_photo(\r\n        description: str,\r\n        file: UploadFile = File(),\r\n        user: User = Depends(auth_service.get_current_user),\r\n        db: AsyncSession = Depends(get_db)\r\n):\r\n    \"\"\"\r\n    The upload_photo function uploads a photo to the server and saves it in the static/images directory.\r\n        It also saves information about the uploaded photo in the database.\r\n\r\n    :param description: str: Get the description of the photo from the request body\r\n    :param file: UploadFile: Get the file from the request\r\n    :param user: User: Get the current user from the auth_service\r\n    :param db: AsyncSession: Get a database session\r\n    :return: The photo object that was uploaded\r\n    :doc-author: Trelent\r\n    \"\"\"\r\n    try:\r\n        # Збереження файлу на сервері\r\n        file_location = f\"static/images/{file.filename}\"\r\n        with open(file_location, \"wb\") as buffer:\r\n            shutil.copyfileobj(file.file, buffer)\r\n\r\n        # Збереження інформації про фото в базі даних\r\n        url = f\"/static/images/{file.filename}\"\r\n        new_photo = PhotoModel(url=url, description=description, user_id=user.id)\r\n        db.add(new_photo)\r\n        await db.commit()\r\n        await db.refresh(new_photo)\r\n\r\n        return new_photo\r\n    except Exception as e:\r\n        raise HTTPException(status_code=500, detail=str(e))\r\n
+===================================================================
+diff --git a/src/routes/photos.py b/src/routes/photos.py
+--- a/src/routes/photos.py	
++++ b/src/routes/photos.py	
+@@ -1,23 +1,22 @@
+-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
++from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, status
+ from sqlalchemy.ext.asyncio import AsyncSession
+ import shutil
+ 
+ from src.database.db import get_db
+ from src.entity.models import Photo as PhotoModel
++from src.repository import photos as repository_photos
+ from src.schemas.photo import Photo, PhotoCreate
+ from src.services.auth import auth_service
+ from src.entity.models import User
++from sqlalchemy.orm import Session
+ 
+ router = APIRouter(prefix="/photos", tags=["photos"])
+ 
+ 
+ @router.post("/", response_model=Photo)
+-async def upload_photo(
+-        description: str,
+-        file: UploadFile = File(),
+-        user: User = Depends(auth_service.get_current_user),
+-        db: AsyncSession = Depends(get_db)
+-):
++async def upload_photo(photo_data: PhotoCreate, description: str, file: UploadFile = File(),
++                       user: User = Depends(auth_service.get_current_user), db: AsyncSession = Depends(get_db)
++                       , repository_tags=None):
+     """
+     The upload_photo function uploads a photo to the server and saves it in the static/images directory.
+         It also saves information about the uploaded photo in the database.
+@@ -29,6 +28,12 @@
+     :return: The photo object that was uploaded
+     :doc-author: Trelent
+     """
++    # Опрацювання тегів
++    tag_objects = []
++    for tag_name in photo_data.tags:
++        tag = repository_tags.get_or_create_tag(db, tag_name)
++        tag_objects.append(tag)
++
+     try:
+         # Збереження файлу на сервері
+         file_location = f"static/images/{file.filename}"
+@@ -37,7 +42,7 @@
+ 
+         # Збереження інформації про фото в базі даних
+         url = f"/static/images/{file.filename}"
+-        new_photo = PhotoModel(url=url, description=description, user_id=user.id)
++        new_photo = PhotoModel(url=url, description=description, user_id=user.id, tags=tag_objects)
+         db.add(new_photo)
+         await db.commit()
+         await db.refresh(new_photo)
+@@ -45,3 +50,31 @@
+         return new_photo
+     except Exception as e:
+         raise HTTPException(status_code=500, detail=str(e))
++
++
++@router.delete("/{photo_id}", status_code=204)
++async def delete_photo(photo_id: int, db: AsyncSession = Depends(get_db)):
++    try:
++        await repository_photos.delete_photo(db, photo_id)
++    except ValueError as e:
++        raise HTTPException(status_code=404, detail=str(e))
++    return {"message": "Photo deleted successfully"}
++
++
++@router.put("/{photo_id}/description", response_model=Photo)
++async def update_photo_description(photo_id: int, description: str, db: Session = Depends(get_db)):
++    try:
++        photo = repository_photos.update_photo_description(db, photo_id, description)
++    except ValueError as e:
++        raise HTTPException(status_code=404, detail=str(e))
++    return photo
++
++
++# TODO
++@router.get("/link/{unique_link}")
++async def get_photo_by_link(unique_link: str, db: AsyncSession = Depends(get_db)):
++    photo = await repository_photos.get_photo_by_link(unique_link, db)
++    if not photo:
++        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found")
++
++    return photo
