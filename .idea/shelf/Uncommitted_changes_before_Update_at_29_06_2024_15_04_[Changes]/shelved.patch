@@ -1,0 +1,119 @@
+Index: src/conf/config.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>\r\n# from pydantic import BaseSettings\r\nfrom pydantic_settings import BaseSettings\r\nfrom pydantic import ConfigDict, field_validator, EmailStr\r\n\r\n\r\nclass Settings(BaseSettings):\r\n    PG_DB:str\r\n    PG_USER: str\r\n    PG_PASSWORD: str\r\n    PG_PORT: int\r\n    PG_DOMAIN: str\r\n    DB_URL: str = \"postgresql+asyncpg://postgres:7703@localhost:5432/postgres_rest_app\"\r\n    SECRET_KEY_JWT: str = \"secret_key\"\r\n    ALGORITHM: str = \"HS256\"\r\n    MAIL_USERNAME: EmailStr = \"user@meta.ua\"\r\n    MAIL_PASSWORD: str = \"123456\"\r\n    MAIL_FROM: str = \"user@meta.ua\"\r\n    MAIL_PORT: int = 465\r\n    MAIL_SERVER: str = \"smtp.meta.ua\"\r\n    REDIS_DOMAIN: str = 'localhost'\r\n    REDIS_PORT: int = 6379\r\n    REDIS_PASSWORD: str | None = None\r\n\r\n    CLOUDINARY_NAME: str = 'Untitled'\r\n    CLOUDINARY_API_KEY: int = 797694525887882\r\n    CLOUDINARY_API_SECRET: str = \"secret\"\r\n\r\n    class Config:\r\n        env_file = \".env\"\r\n        env_file_encoding = \"utf-8\"\r\n\r\n\r\nconfig = Settings()\r\n\r\n    
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/conf/config.py b/src/conf/config.py
+--- a/src/conf/config.py	(revision 986957f7334a85927a15d7abc47d0ef751eee63d)
++++ b/src/conf/config.py	(date 1719662216256)
+@@ -1,36 +1,46 @@
+-
+-# from pydantic import BaseSettings
+-from pydantic_settings import BaseSettings
++from typing import Any
+ from pydantic import ConfigDict, field_validator, EmailStr
++from pydantic_settings import BaseSettings
+ 
+ 
+ class Settings(BaseSettings):
+-    PG_DB:str
+-    PG_USER: str
+-    PG_PASSWORD: str
+-    PG_PORT: int
+-    PG_DOMAIN: str
+-    DB_URL: str = "postgresql+asyncpg://postgres:7703@localhost:5432/postgres_rest_app"
+-    SECRET_KEY_JWT: str = "secret_key"
+-    ALGORITHM: str = "HS256"
+-    MAIL_USERNAME: EmailStr = "user@meta.ua"
+-    MAIL_PASSWORD: str = "123456"
+-    MAIL_FROM: str = "user@meta.ua"
+-    MAIL_PORT: int = 465
+-    MAIL_SERVER: str = "smtp.meta.ua"
+-    REDIS_DOMAIN: str = 'localhost'
+-    REDIS_PORT: int = 6379
++    POSTGRES_DB: str
++    POSTGRES_USER: str
++    POSTGRES_PASSWORD: str
++    POSTGRES_PORT: int
++    POSTGRES_DOMAIN: str
++
++    DATABASE_URL: str = ""
++
++    SECRET_KEY_JWT: str
++    ALGORITHM: str
++
++    MAIL_USERNAME: EmailStr
++    MAIL_PASSWORD: str
++    MAIL_FROM: str
++    MAIL_PORT: int
++    MAIL_SERVER: str
++
++    REDIS_DOMAIN: str
++    REDIS_PORT: int
+     REDIS_PASSWORD: str | None = None
+ 
+-    CLOUDINARY_NAME: str = 'Untitled'
+-    CLOUDINARY_API_KEY: int = 797694525887882
+-    CLOUDINARY_API_SECRET: str = "secret"
++    CLOUDINARY_NAME: str
++    CLOUDINARY_API_KEY: int
++    CLOUDINARY_API_SECRET: str
+ 
+-    class Config:
+-        env_file = ".env"
+-        env_file_encoding = "utf-8"
++    @field_validator("ALGORITHM")
++    @classmethod
++    def validate_algorithm(cls, v: Any):
++        if v not in ["HS256", "HS512"]:
++            raise ValueError("algorithm must be HS256 or HS512")
++        return v
++
++    model_config = ConfigDict(extra='ignore', env_file=".env", env_file_encoding="utf-8")  # noqa
+ 
+ 
+ config = Settings()
+ 
++config.DATABASE_URL = f"postgresql+asyncpg://{config.POSTGRES_USER}:{config.POSTGRES_PASSWORD}@{config.POSTGRES_DOMAIN}:{config.POSTGRES_PORT}/{config.POSTGRES_DB}"
++
+     
+\ No newline at end of file
+Index: docker-compose.yml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>version: '3.9'\r\nservices:\r\n  redis:\r\n    image: redis:alpine\r\n    ports:\r\n      - \"6379:6379\"\r\n  postgres:\r\n    image: postgres\r\n    container_name: new_postgres\r\n    environment:\r\n\r\n      POSTGRES_DB: ${PG_DB}\r\n      POSTGRES_USER: ${PG_USER}\r\n      POSTGRES_PASSWORD: ${PG_PASSWORD}\r\n    ports:\r\n      - \"5432:5432\"\r\n    volumes:\r\n      - ./postgres-data:/var/lib/postgresql/data\r\n    # volumes:\r\n    #   - existing_volume_name:/var/lib/postgresql/data\r\n\r\nvolumes:\r\n  postgres-data:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/docker-compose.yml b/docker-compose.yml
+--- a/docker-compose.yml	(revision 986957f7334a85927a15d7abc47d0ef751eee63d)
++++ b/docker-compose.yml	(date 1719661369362)
+@@ -4,20 +4,18 @@
+     image: redis:alpine
+     ports:
+       - "6379:6379"
++
+   postgres:
+     image: postgres
+     container_name: new_postgres
+     environment:
+-
+-      POSTGRES_DB: ${PG_DB}
+-      POSTGRES_USER: ${PG_USER}
+-      POSTGRES_PASSWORD: ${PG_PASSWORD}
++      POSTGRES_DB: ${POSTGRES_DB}
++      POSTGRES_USER: ${POSTGRES_USER}
++      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+     ports:
+       - "5432:5432"
+     volumes:
+       - ./postgres-data:/var/lib/postgresql/data
+-    # volumes:
+-    #   - existing_volume_name:/var/lib/postgresql/data
+ 
+ volumes:
+-  postgres-data:
+\ No newline at end of file
++  postgres-data:
