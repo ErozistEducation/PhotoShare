@@ -4,7 +4,30 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="770e9f81-37f4-43fe-8514-0a1269178e1b" name="Changes" comment="cloudinary_operations" />
+    <list default="true" id="770e9f81-37f4-43fe-8514-0a1269178e1b" name="Changes" comment="cloudinary_operations">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/poetry.lock" beforeDir="false" afterPath="$PROJECT_DIR$/poetry.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postgres-data/base/1/pg_internal.init" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/1/pg_internal.init" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/1249" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/1249" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/16398" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/16398" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/16421" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/16421" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/16422" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/16422" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/16426" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/16426" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/16428" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/16428" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/16430" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/16430" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/16431" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/16431" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/16437" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/16437" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/pg_internal.init" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/pg_internal.init" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postgres-data/base/5/pg_internal.init" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/5/pg_internal.init" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postgres-data/global/pg_control" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/global/pg_control" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postgres-data/global/pg_internal.init" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/global/pg_internal.init" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postgres-data/pg_wal/000000010000000000000001" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/pg_wal/000000010000000000000001" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postgres-data/pg_xact/0000" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/pg_xact/0000" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/postgres-data/postmaster.pid" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/postmaster.pid" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/repository/photos.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/repository/photos.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/photos.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/photos.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -38,21 +61,21 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "Cloudinary-operations",
-    "last_opened_file_path": "D:/IT/Тимчасові/Project_WEB/PhotoShare",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "terminal",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;Cloudinary-operations&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/IT/Тимчасові/Project_WEB/PhotoShare&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;terminal&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -76,6 +99,7 @@
       <workItem from="1719419084414" duration="270000" />
       <workItem from="1719420221433" duration="1431000" />
       <workItem from="1719659133733" duration="794000" />
+      <workItem from="1719685511442" duration="48000" />
     </task>
     <task id="LOCAL-00001" summary="uploading_photos">
       <option name="closed" value="true" />
@@ -101,7 +125,15 @@
       <option name="project" value="LOCAL" />
       <updated>1719677953575</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="cloudinary_operations">
+      <option name="closed" value="true" />
+      <created>1719678116619</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1719678116619</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

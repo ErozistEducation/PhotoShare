@@ -3,6 +3,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 from src.entity.models import Photo, Tag, User
 from src.schemas.photo import PhotoCreate, PhotoUpdate
+from typing import Dict
 
 # async def create_photo(photo_data: PhotoCreate, user: User, db: AsyncSession):
 #     new_photo = Photo(
@@ -79,3 +80,13 @@ async def get_photo(photo_id: int, db: AsyncSession):
 async def get_photos(user: User, db: AsyncSession):
     photos = await db.execute(select(Photo).filter_by(user=user).options(joinedload(Photo.tags)))
     return photos.scalars().all()
+
+
+transformations_db = {}
+
+
+def save_transformation_to_db(transformation_id: str, transformed_url: str, transformations: Dict[str, str]):
+    transformations_db[transformation_id] = {
+        'transformed_url': transformed_url,
+        'transformations': transformations
+    }
