@@ -4,30 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="770e9f81-37f4-43fe-8514-0a1269178e1b" name="Changes" comment="cloudinary_operations">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/poetry.lock" beforeDir="false" afterPath="$PROJECT_DIR$/poetry.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postgres-data/base/1/pg_internal.init" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/1/pg_internal.init" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/1249" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/1249" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/16398" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/16398" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/16421" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/16421" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/16422" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/16422" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/16426" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/16426" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/16428" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/16428" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/16430" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/16430" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/16431" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/16431" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/16437" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/16437" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postgres-data/base/16384/pg_internal.init" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/16384/pg_internal.init" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postgres-data/base/5/pg_internal.init" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/base/5/pg_internal.init" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postgres-data/global/pg_control" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/global/pg_control" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postgres-data/global/pg_internal.init" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/global/pg_internal.init" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postgres-data/pg_wal/000000010000000000000001" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/pg_wal/000000010000000000000001" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postgres-data/pg_xact/0000" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/pg_xact/0000" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/postgres-data/postmaster.pid" beforeDir="false" afterPath="$PROJECT_DIR$/postgres-data/postmaster.pid" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/repository/photos.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/repository/photos.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/photos.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/photos.py" afterDir="false" />
-    </list>
+    <list default="true" id="770e9f81-37f4-43fe-8514-0a1269178e1b" name="Changes" comment="cloudinary_operations" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -133,7 +110,15 @@
       <option name="project" value="LOCAL" />
       <updated>1719678116619</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="cloudinary_operations">
+      <option name="closed" value="true" />
+      <created>1719689730838</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1719689730838</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
