@@ -2,7 +2,6 @@ from fastapi import APIRouter, HTTPException, Depends, status, BackgroundTasks, 
 from fastapi.security import OAuth2PasswordRequestForm, HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-
 from src.database.db import get_db
 from src.repository import users as repositories_users
 from src.schemas.user import UserSchema, TokenSchema, UserResponse, RequestEmail
@@ -14,27 +13,14 @@ router = APIRouter(prefix='/auth', tags=['auth'])
 
 get_refresh_token = HTTPBearer()
 
+
 @router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def signup(body: UserSchema, bt: BackgroundTasks, request: Request, db: AsyncSession = Depends(get_db)):
-    """
-    The signup function creates a new user in the database.
-        It takes in a UserSchema object, which is validated by pydantic.
-        If the email already exists, it raises an HTTPException with status code 409 (Conflict).
-        Otherwise, it hashes the password and creates a new user using create_user from repositories/users.py.
-
-    :param body: UserSchema: Validate the request body
-    :param bt: BackgroundTasks: Add a task to the background tasks queue
-    :param request: Request: Get the base url of the application
-    :param db: AsyncSession: Get the database session
-    :return: A user object
-    :doc-author: Trelent
-    """
     exist_user = await repositories_users.get_user_by_email(body.email, db)
     if exist_user:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=messages.ACCOUNT_EXIST)
 
     is_first_user = (await db.execute(text("SELECT COUNT(*) FROM users"))).scalar() == 0
-
     body.password = auth_service.get_password_hash(body.password)
     new_user = await repositories_users.create_user(body, role="admin" if is_first_user else "user", db=db)
     bt.add_task(send_email, new_user.email, new_user.username, str(request.base_url))
@@ -50,7 +36,7 @@ async def login(body: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = 
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Email not confirmed")
     if not auth_service.verify_password(body.password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password")
-    # Generate JWT
+
     access_token = await auth_service.create_access_token(data={"sub": user.email})
     refresh_token = await auth_service.create_refresh_token(data={"sub": user.email})
     await repositories_users.update_token(user, refresh_token, db)
@@ -75,13 +61,6 @@ async def refresh_token(credentials: HTTPAuthorizationCredentials = Depends(get_
 
 @router.get('/confirmed_email/{token}')
 async def confirmed_email(token: str, db: AsyncSession = Depends(get_db)):
-    """
-    The confirmed_email function confirms the user's email address.
-
-    :param token: The token sent to the user's email address
-    :param db: The database session
-    :return: A message indicating whether the email was confirmed or not
-    """
     email = await auth_service.get_email_from_token(token)
     user = await repositories_users.get_user_by_email(email, db)
     if user is None:
@@ -96,9 +75,9 @@ async def confirmed_email(token: str, db: AsyncSession = Depends(get_db)):
 async def request_email(body: RequestEmail, background_tasks: BackgroundTasks, request: Request,
                         db: AsyncSession = Depends(get_db)):
     user = await repositories_users.get_user_by_email(body.email, db)
-
     if user.confirmed:
         return {"message": "Your email is already confirmed"}
     if user:
         background_tasks.add_task(send_email, user.email, user.username, str(request.base_url))
     return {"message": "Check your email for confirmation."}
+
