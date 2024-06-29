@@ -1,6 +1,7 @@
 from typing import Any
-from pydantic import ConfigDict, field_validator, EmailStr
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict, field_validator, EmailStr
+
 
 class Settings(BaseSettings):
     POSTGRES_DB: str
@@ -9,7 +10,7 @@ class Settings(BaseSettings):
     POSTGRES_PORT: int
     POSTGRES_DOMAIN: str
     
-    DATABASE_URL: str = ""
+    DATABASE_URL: str
     
     SECRET_KEY_JWT: str
     ALGORITHM: str
@@ -35,9 +36,6 @@ class Settings(BaseSettings):
             raise ValueError("algorithm must be HS256 or HS512")
         return v
 
-    model_config = ConfigDict(extra='ignore', env_file=".env", env_file_encoding="utf-8")  # noqa
+    model_config = ConfigDict(extra='ignore', env_file=".env", env_file_encoding="utf-8")
 
 config = Settings()
-
-
-config.DATABASE_URL = f"postgresql+asyncpg://{config.POSTGRES_USER}:{config.POSTGRES_PASSWORD}@{config.POSTGRES_DOMAIN}:{config.POSTGRES_PORT}/{config.POSTGRES_DB}"

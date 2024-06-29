@@ -3,7 +3,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 from src.entity.models import Photo, Tag, User
 from src.schemas.photo import PhotoCreate, PhotoUpdate
-
+import logging
 # async def create_photo(photo_data: PhotoCreate, user: User, db: AsyncSession):
 #     new_photo = Photo(
 #         url=photo_data.url,
@@ -16,27 +16,35 @@ from src.schemas.photo import PhotoCreate, PhotoUpdate
 #     await db.commit()
 #     await db.refresh(new_photo)
     
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 async def create_photo(photo_data: PhotoCreate, user: User, db: AsyncSession):
+    logger.debug(f"Starting to create a photo for user {user.id} with data: {photo_data}")
+    
     new_photo = Photo(
         url=photo_data.url,
         description=photo_data.description,
         user_id=user.id
     )
     if photo_data.tags is not None:
-        # photo.tags = []
+        logger.debug(f"Processing tags for the photo: {photo_data.tags}")
         for tag_name in photo_data.tags:
             tag = await db.execute(select(Tag).filter_by(name=tag_name))
             existing_tag = tag.scalar_one_or_none()
             if existing_tag:
-                pass
+                logger.debug(f"Tag '{tag_name}' already exists. Skipping creation.")
             else:
+                logger.debug(f"Creating new tag: {tag_name}")
                 new_tag = Tag(name=tag_name)
                 db.add(new_tag)
                 await db.flush()
-                # photo.tags.append(new_tag)
+    
     db.add(new_photo)
     await db.commit()
     await db.refresh(new_photo)
+    
+    logger.debug(f"Photo created successfully with ID: {new_photo.id}")
     return new_photo
 
 

@@ -1,16 +1,19 @@
+import urllib
+
 from fastapi import APIRouter, HTTPException, Depends, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, List  # Додайте цей рядок
+from typing import Optional, List
+from src.conf.config import config
 from src.database.db import get_db
 from src.entity.models import User
-from src.schemas.photo import PhotoCreate, PhotoUpdate, PhotoResponse
+from src.schemas.photo import PhotoCreate, PhotoUpdate, PhotoResponse, PhotoBase
 from src.services.auth import auth_service
 from src.services.cloudinary import upload_image
 from src.repository.photos import create_photo, update_photo, delete_photo, get_photo, get_photos
 
 router = APIRouter(prefix='/photos', tags=['photos'])
 
-@router.post("/", response_model=PhotoResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=PhotoBase, status_code=status.HTTP_201_CREATED)
 async def upload_photo(
     description: Optional[str] = None,
     file: UploadFile = File(...),
@@ -61,3 +64,20 @@ async def list_photos(
     db: AsyncSession = Depends(get_db)
 ):
     return await get_photos(user, db)
+
+
+@router.get("/transform-image/{image_id}")
+def transform_image(image_id: str, width: int = 500, height: int = 500, crop_mode: str = None,
+                    rotation: int = 0, filter_type: str = None, overlay_text: str = None):
+    cloudinary_params = {
+        "api_key": config.CLOUDINARY_API_KEY,
+        "width": width,
+        "height": height,
+        "crop": crop_mode,    # параметр для режиму обрізки
+        "angle": rotation,    # кут повороту (градуси)
+        "overlay": overlay_text, # текст на фото
+        "effect": filter_type,   # параметр для фільтрів
+    }
+    cloudinary_url = f"{config.CLOUDINARY_BASE_URL}/image/upload/{image_id}.jpg"
+    transformed_url = f"{cloudinary_url}?{urllib.parse.urlencode(cloudinary_params)}"
+    return {"transformed_url": transformed_url}
