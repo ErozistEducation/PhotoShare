@@ -10,7 +10,7 @@ from src.entity.models import User
 from src.schemas.photo import PhotoCreate, PhotoUpdate, PhotoResponse2, PhotoBase, PhotoResponse
 from src.services.auth import auth_service
 from src.services.cloudinary import upload_image
-from src.repository.photos import create_photo, update_photo, delete_photo, get_photo, get_photos, add_tags_to_photo
+from src.repository.photos import create_photo, update_photo, delete_photo, get_photo, get_photos, add_tags_to_photo, remove_tags_from_photo
 
 router = APIRouter(prefix='/photos', tags=['photos'])
 logging.basicConfig(level=logging.DEBUG)
@@ -81,6 +81,23 @@ async def add_tags(photo_id: int,
         photo = await add_tags_to_photo(photo_id, tags, user, db)
     except ValueError as e:
         logger.error(f"Error adding tags to photo ID {photo_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    if not photo:
+        logger.debug("Photo with ID: %d not found for user: %d", photo_id, user.id)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found")
+    return photo
+
+
+@router.delete("/{photo_id}/tags", response_model=PhotoResponse, status_code=status.HTTP_200_OK)
+async def remove_tags(photo_id: int,
+                      tags: List[str],
+                      user: User = Depends(auth_service.get_current_user),
+                      db: AsyncSession = Depends(get_db)):
+    logger.debug("Received request to remove tags from photo with ID: %d", photo_id)
+    try:
+        photo = await remove_tags_from_photo(photo_id, tags, user, db)
+    except ValueError as e:
+        logger.error(f"Error removing tags from photo ID {photo_id}: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     if not photo:
         logger.debug("Photo with ID: %d not found for user: %d", photo_id, user.id)

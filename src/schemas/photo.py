@@ -16,6 +16,8 @@ class PhotoUpdate(BaseModel):
 class TagBase(BaseModel):
     id: int
     name: str
+    
+    model_config = ConfigDict(from_attributes=True)
 
 class PhotoResponse(BaseModel):
     id: int

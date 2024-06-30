@@ -116,6 +116,29 @@ async def validate_tags(photo: Photo, new_tags: List[str]):
 
     return unique_new_tags
 
+async def remove_tags_from_photo(photo_id: int, tags: List[str], user: User, db: AsyncSession):
+    logger.debug("Received request to remove tags from photo with ID: %d for user: %d", photo_id, user.id)
+    stmt = select(Photo).filter_by(id=photo_id, user_id=user.id).options(joinedload(Photo.tags))
+    result = await db.execute(stmt)
+    photo = result.unique().scalar_one_or_none()
+    if not photo:
+        logger.error("Photo with ID: %d not found for user: %d", photo_id, user.id)
+        return None
+
+    tags_to_remove = [tag for tag in photo.tags if tag.name in tags]
+    if not tags_to_remove:
+        logger.error("No matching tags found for photo ID: %d", photo_id)
+        raise ValueError("No matching tags found for this photo")
+    
+    for tag in tags_to_remove:
+        photo.tags.remove(tag)
+    
+    await db.commit()
+    await db.refresh(photo)
+    logger.debug("Tags removed successfully from photo ID: %d for user: %d", photo_id, user.id)
+    return photo
+
+
 
 #####################
 transformations_db = {}
