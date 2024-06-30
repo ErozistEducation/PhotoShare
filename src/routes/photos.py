@@ -84,6 +84,7 @@ async def add_tags(photo_id: int,
     return photo
 
 #############################
+
 import cloudinary.uploader
 import qrcode
 from typing import Dict
@@ -112,6 +113,7 @@ def transform_image(image_id: str, width: int = 500, height: int = 500,
     cloudinary_url = f"{config.CLOUDINARY_BASE_URL}/image/upload/{image_id}.jpg"
     transformed_url = f"{cloudinary_url}?{urllib.parse.urlencode(cloudinary_params)}"
     return {"transformed_url": transformed_url}
+
 
 
 @router.post("/transform-image2/")
@@ -149,6 +151,7 @@ async def transform_image2(request: ImageTransformRequest):
         "qr_code_image": qr_img
     }
 
+
 @router.post("/transform-image3/")
 async def transform_image3(request: ImageTransformRequest):
     cloudinary.config(
@@ -177,3 +180,4 @@ async def transform_image3(request: ImageTransformRequest):
         "transformed_url": transformed_url,
         "qr_code_image": qr_img
     }
+

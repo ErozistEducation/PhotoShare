@@ -1,5 +1,6 @@
 import logging
 from typing import Dict, List
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
@@ -66,6 +67,7 @@ async def get_photos(user: User, db: AsyncSession):
     result = await db.execute(stmt)
     photos = result.unique().scalars().all()
     return photos
+
 
 async def add_tags_to_photo(photo_id: int, tags: List[str], user: User, db: AsyncSession):
     logger.debug("Received request to add tags to photo with ID: %d for user: %d", photo_id, user.id)

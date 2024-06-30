@@ -27,3 +27,4 @@ class PhotoResponse2(PhotoBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+

@@ -30,12 +30,6 @@ class Settings(BaseSettings):
     CLOUDINARY_API_SECRET: str
     CLOUDINARY_BASE_URL: str
 
-    @field_validator("ALGORITHM")
-    @classmethod
-    def validate_algorithm(cls, v: Any):
-        if v not in ["HS256", "HS512"]:
-            raise ValueError("algorithm must be HS256 or HS512")
-        return v
 
     model_config = ConfigDict(
         extra="ignore", env_file=".env", env_file_encoding="utf-8"
