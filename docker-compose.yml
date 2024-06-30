@@ -5,8 +5,10 @@ services:
     ports:
       - "6379:6379"
   postgres:
-    image: postgres:16
+    image: postgres
+    container_name: new_postgres
     environment:
+
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -14,3 +16,8 @@ services:
       - "5432:5432"
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
+    # volumes:
+    #   - existing_volume_name:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

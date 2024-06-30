@@ -31,7 +31,6 @@ async def get_current_user(user: User = Depends(auth_service.get_current_user)):
 )
 async def update_avatar(file: UploadFile = File(), user: User = Depends(auth_service.get_current_user),
                         db: AsyncSession = Depends(get_db)):
-    # public_id = user.email
     res_url = upload_image(file.file)
     user = await repositories_users.update_avatar_url(user.email, res_url, db)
     auth_service.cache.set(user.email, pickle.dumps(user))
