@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     
     DATABASE_URL: str = ""
     
+    
+    DATABASE_URL: str = ""
+    
     SECRET_KEY_JWT: str
     ALGORITHM: str
     

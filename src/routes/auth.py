@@ -33,6 +33,10 @@ async def signup(body: UserSchema, bt: BackgroundTasks, request: Request, db: As
     if exist_user:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=messages.ACCOUNT_EXIST)
 
+    exist_user_by_username = await repositories_users.get_user_by_username(body.username, db)
+    if exist_user_by_username:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already exists")
+
     is_first_user = (await db.execute(text("SELECT COUNT(*) FROM users"))).scalar() == 0
 
     body.password = auth_service.get_password_hash(body.password)
