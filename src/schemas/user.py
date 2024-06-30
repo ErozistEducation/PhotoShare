@@ -1,5 +1,5 @@
 from typing import Optional
-
+from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 from src.entity.models import Role
@@ -25,3 +25,14 @@ class TokenSchema(BaseModel):
 
 class RequestEmail(BaseModel):
     email: EmailStr
+
+
+class UserProfileResponse(UserResponse):
+    created_at: datetime
+    updated_at: datetime
+    confirmed: bool
+    photo_count: int
+    
+class UserUpdateSchema(BaseModel):
+    username: str 
+    password: str

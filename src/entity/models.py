@@ -45,7 +45,7 @@ class Role(enum.Enum):
 class User(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True)
-    username: Mapped[str] = mapped_column(String(50))
+    username: Mapped[str] = mapped_column(String(50),unique=True)
     email: Mapped[str] = mapped_column(String(150), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     avatar: Mapped[str] = mapped_column(String(255), nullable=True)
@@ -58,6 +58,9 @@ class User(Base):
         Enum(Role), default=Role.user, nullable=True
     )
     confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=True)
+
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=True) 
+
     todos: Mapped[list["Todo"]] = relationship("Todo", back_populates="user", lazy="joined", uselist=True)
     photos: Mapped[list["Photo"]] = relationship("Photo", back_populates="user", lazy="joined", uselist=True)
     comments: Mapped[list["Comment"]] = relationship("Comment", back_populates="user", lazy="joined", uselist=True)

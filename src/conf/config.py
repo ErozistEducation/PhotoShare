@@ -37,3 +37,4 @@ class Settings(BaseSettings):
 
 
 config = Settings()
+

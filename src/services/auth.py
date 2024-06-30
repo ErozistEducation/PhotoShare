@@ -94,6 +94,7 @@ class Auth:
             user = pickle.loads(user)
         return user
 
+
     def create_email_token(self, data: dict):
         to_encode = data.copy()
         expire = datetime.now(UTC) + timedelta(days=1)
