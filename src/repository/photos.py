@@ -19,21 +19,14 @@ async def create_photo(photo_data: PhotoCreate, user: User, db: AsyncSession):
         description=photo_data.description,
         user_id=user.id
     )
-    if photo_data.tags is not None:
-        for tag_name in photo_data.tags:
-            tag = await db.execute(select(Tag).filter_by(name=tag_name))
-            existing_tag = tag.scalar_one_or_none()
-            if existing_tag:
-                new_photo.tags.append(existing_tag)
-            else:
-                new_tag = Tag(name=tag_name)
-                db.add(new_tag)
-                await db.flush()
-                new_photo.tags.append(new_tag)
+    if photo_data.tags:
+        tags = await get_or_create_tags(photo_data.tags, db)
+        new_photo.tags.extend(tags)
     
     db.add(new_photo)
     await db.commit()
     await db.refresh(new_photo)
+    logger.debug("Photo created successfully with ID: %d for user: %d", new_photo.id, user.id)
     return new_photo
 
 
@@ -74,39 +67,55 @@ async def add_tags_to_photo(photo_id: int, tags: List[str], user: User, db: Asyn
     stmt = select(Photo).filter_by(id=photo_id, user_id=user.id).options(joinedload(Photo.tags))
     result = await db.execute(stmt)
     photo = result.unique().scalar_one_or_none()
-    if photo:
-        if len(photo.tags) + len(tags) > 5:
-            raise ValueError("Cannot add more than 5 tags to a photo")
-        for tag_name in tags:
-            tag = await db.execute(select(Tag).filter_by(name=tag_name))
-            existing_tag = tag.scalar_one_or_none()
-            if existing_tag:
-                if existing_tag not in photo.tags:
-                    photo.tags.append(existing_tag)
-                    logger.debug("Tag '%s' added to photo ID: %d", tag_name, photo_id)
-            else:
-                new_tag = Tag(name=tag_name)
-                db.add(new_tag)
-                await db.flush()
-                photo.tags.append(new_tag)
-                logger.debug("New tag '%s' created and added to photo ID: %d", tag_name, photo_id)
-                
-    if photo_data.tags is not None:
-        for tag_name in photo_data.tags:
-            tag = await db.execute(select(Tag).filter_by(name=tag_name))
-            existing_tag = tag.scalar_one_or_none()
-            if existing_tag:
-                new_photo.tags.append(existing_tag)
-            else:
-                new_tag = Tag(name=tag_name)
-                db.add(new_tag)
-                await db.flush()
-                new_photo.tags.append(new_tag)
-                
-        await db.commit()
-        await db.refresh(photo)
-        logger.debug("Tags added successfully to photo ID: %d for user: %d", photo_id, user.id)
+    if not photo:
+        logger.error("Photo with ID: %d not found for user: %d", photo_id, user.id)
+        return None
+
+    try:
+        unique_new_tags = await validate_tags(photo, tags)
+    except ValueError as e:
+        logger.error(f"Validation error for photo ID {photo_id}: {e}")
+        raise e
+
+    tags = await get_or_create_tags(unique_new_tags, db)
+    photo.tags.extend(tags)
+    await db.commit()
+    await db.refresh(photo)
+    logger.debug("Tags added successfully to photo ID: %d for user: %d", photo_id, user.id)
     return photo
+
+
+async def get_or_create_tags(tag_names: List[str], db: AsyncSession):
+    tags = []
+    for tag_name in tag_names:
+        logger.debug("Processing tag: %s", tag_name)
+        tag = await db.execute(select(Tag).filter_by(name=tag_name))
+        existing_tag = tag.scalar_one_or_none()
+        if existing_tag:
+            logger.debug("Existing tag found: %s", tag_name)
+            tags.append(existing_tag)
+        else:
+            logger.debug("Creating new tag: %s", tag_name)
+            new_tag = Tag(name=tag_name)
+            db.add(new_tag)
+            await db.flush()
+            tags.append(new_tag)
+            logger.debug("New tag created: %s", tag_name)
+    return tags
+
+async def validate_tags(photo: Photo, new_tags: List[str]):
+    existing_tags = {tag.name for tag in photo.tags}
+    unique_new_tags = [tag for tag in new_tags if tag not in existing_tags]
+    if len(photo.tags) + len(unique_new_tags) > 5:
+        logger.error("Cannot add more than 5 tags to photo with ID: %d", photo.id)
+        raise ValueError("Cannot add more than 5 tags to a photo")
+
+    if not unique_new_tags:
+        logger.debug("All tags already exist for photo ID: %d", photo.id)
+        raise ValueError("All tags already exist for this photo")
+
+    return unique_new_tags
+
 
 #####################
 transformations_db = {}

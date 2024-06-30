@@ -77,7 +77,11 @@ async def add_tags(photo_id: int,
                    user: User = Depends(auth_service.get_current_user),
                    db: AsyncSession = Depends(get_db)):
     logger.debug("Received request to add tags to photo with ID: %d", photo_id)
-    photo = await add_tags_to_photo(photo_id, tags, user, db)
+    try:
+        photo = await add_tags_to_photo(photo_id, tags, user, db)
+    except ValueError as e:
+        logger.error(f"Error adding tags to photo ID {photo_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     if not photo:
         logger.debug("Photo with ID: %d not found for user: %d", photo_id, user.id)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found")

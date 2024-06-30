@@ -1,6 +1,6 @@
 from typing import Any
 from pydantic_settings import BaseSettings
-from pydantic import ConfigDict, field_validator, EmailStr
+from pydantic import ConfigDict, EmailStr
 
 
 class Settings(BaseSettings):
@@ -37,4 +37,3 @@ class Settings(BaseSettings):
 
 
 config = Settings()
-

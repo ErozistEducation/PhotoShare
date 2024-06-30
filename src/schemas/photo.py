@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 class PhotoBase(BaseModel):
     url: str
@@ -13,11 +13,16 @@ class PhotoUpdate(BaseModel):
     description: Optional[str] = None
     # tags: Optional[List[str]] = []
 
-class PhotoResponse(PhotoBase):
+class TagBase(BaseModel):
     id: int
-    created_at: datetime
-    updated_at: datetime
-    tags: List[str]
+    name: str
+
+class PhotoResponse(BaseModel):
+    id: int
+    url: str
+    description: Optional[str] = None
+    tags: List[TagBase] = Field(default_factory=list)
+    user_id: int
 
     model_config = ConfigDict(from_attributes=True)
 

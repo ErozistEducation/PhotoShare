@@ -51,12 +51,10 @@ class User(Base):
     avatar: Mapped[str] = mapped_column(String(255), nullable=True)
     refresh_token: Mapped[str] = mapped_column(String(255), nullable=True)
     created_at: Mapped[date] = mapped_column(DateTime, default=func.now())
-    updated_at: Mapped[date] = mapped_column(
-        DateTime, default=func.now(), onupdate=func.now()
-    )
-    role: Mapped[Role] = mapped_column(
-        Enum(Role), default=Role.user, nullable=True
-    )
+    updated_at: Mapped[date] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
+
+    role: Mapped[Enum] = mapped_column(Enum(Role), default=Role.user, nullable=True)
+    
     confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=True)
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=True) 
