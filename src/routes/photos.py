@@ -7,10 +7,10 @@ from typing import Optional, List
 from src.conf.config import config
 from src.database.db import get_db
 from src.entity.models import User
-from src.schemas.photo import PhotoCreate, PhotoUpdate, PhotoResponse2, PhotoBase #PhotoResponse, 
+from src.schemas.photo import PhotoCreate, PhotoUpdate, PhotoResponse2, PhotoBase, PhotoResponse
 from src.services.auth import auth_service
 from src.services.cloudinary import upload_image
-from src.repository.photos import create_photo, update_photo, delete_photo, get_photo, get_photos
+from src.repository.photos import create_photo, update_photo, delete_photo, get_photo, get_photos, add_tags_to_photo
 
 router = APIRouter(prefix='/photos', tags=['photos'])
 logging.basicConfig(level=logging.DEBUG)
@@ -71,7 +71,19 @@ async def list_all_photos(
     return photos
 
 
+@router.post("/{photo_id}/tags", response_model=PhotoResponse, status_code=status.HTTP_200_OK)
+async def add_tags(photo_id: int,
+                   tags: List[str],
+                   user: User = Depends(auth_service.get_current_user),
+                   db: AsyncSession = Depends(get_db)):
+    logger.debug("Received request to add tags to photo with ID: %d", photo_id)
+    photo = await add_tags_to_photo(photo_id, tags, user, db)
+    if not photo:
+        logger.debug("Photo with ID: %d not found for user: %d", photo_id, user.id)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found")
+    return photo
 
+#############################
 import cloudinary.uploader
 import qrcode
 from typing import Dict
@@ -102,8 +114,8 @@ def transform_image(image_id: str, width: int = 500, height: int = 500,
     return {"transformed_url": transformed_url}
 
 
-@router.post("/transform-image/")
-async def transform_image_to_qrcode(request: ImageTransformRequest):
+@router.post("/transform-image2/")
+async def transform_image2(request: ImageTransformRequest):
     # Конфігурація Cloudinary
     cloudinary.config(
         cloud_name=config.CLOUDINARY_NAME,
@@ -132,6 +144,35 @@ async def transform_image_to_qrcode(request: ImageTransformRequest):
     qr_img = qr.make_image(fill_color="black", back_color="white")
 
     # Повернення URL трансформованого зображення та самого QR-коду як відповідь
+    return {
+        "transformed_url": transformed_url,
+        "qr_code_image": qr_img
+    }
+
+@router.post("/transform-image3/")
+async def transform_image3(request: ImageTransformRequest):
+    cloudinary.config(
+        cloud_name=config.CLOUDINARY_NAME,
+        api_key=config.CLOUDINARY_API_KEY,
+        api_secret=config.CLOUDINARY_API_SECRET
+    )
+
+    transformed_url = cloudinary.uploader.upload(request.image_url, **request.transformations)["url"]
+
+    transformation_id = "unique_identifier_for_this_transformation"
+
+    save_transformation_to_db(transformation_id, transformed_url, request.transformations)
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(transformed_url)
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="black", back_color="white")
+
     return {
         "transformed_url": transformed_url,
         "qr_code_image": qr_img
