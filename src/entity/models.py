@@ -58,9 +58,9 @@ class User(Base):
         Enum(Role), default=Role.user, nullable=True
     )
     confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=True)
-    todos: Mapped["Todo"] = relationship("Todo", back_populates="user", lazy="joined")
-    photos: Mapped["Photo"] = relationship("Photo", back_populates="user", lazy="joined")
-    comments: Mapped["Comment"] = relationship("Comment", back_populates="user", lazy="joined")
+    todos: Mapped[list["Todo"]] = relationship("Todo", back_populates="user", lazy="joined", uselist=True)
+    photos: Mapped[list["Photo"]] = relationship("Photo", back_populates="user", lazy="joined", uselist=True)
+    comments: Mapped[list["Comment"]] = relationship("Comment", back_populates="user", lazy="joined", uselist=True)
 
 
 class Photo(Base):
@@ -74,8 +74,9 @@ class Photo(Base):
     )
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     user: Mapped["User"] = relationship("User", back_populates="photos", lazy="joined")
-    tags: Mapped["Tag"] = relationship("Tag", secondary="photo_tags", back_populates="photos")
+    tags: Mapped[list["Tag"]] = relationship("Tag", secondary="photo_tags", back_populates="photos")
     comments: Mapped["Comment"] = relationship("Comment", back_populates="photo", lazy="joined")
+
 
 
 class Tag(Base):
