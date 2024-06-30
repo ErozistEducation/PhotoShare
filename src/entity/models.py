@@ -79,7 +79,6 @@ class Photo(Base):
 
 
 
-
 class Tag(Base):
     __tablename__ = "tags"
     id: Mapped[int] = mapped_column(primary_key=True)

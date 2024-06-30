@@ -11,7 +11,6 @@ async def get_user_by_email(email: str, db: AsyncSession):
     stmt = select(User).filter_by(email=email)
     result = await db.execute(stmt)
     user = result.scalars().first()
-
     return user
 
 async def create_user(body: UserSchema, role: Role, db: AsyncSession = Depends(get_db)) -> User:
