@@ -1,4 +1,5 @@
 import urllib
+
 import logging
 from fastapi import APIRouter, HTTPException, Depends, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -87,6 +88,7 @@ class ImageTransformRequest(BaseModel):
 @router.get("/transform-image/{image_id}")
 def transform_image(image_id: str, width: int = 500, height: int = 500,
                     crop_mode: str = None,
+
                     rotation: int = 0, filter_type: str = None, overlay_text: str = None):
     cloudinary_params = {
         "api_key": config.CLOUDINARY_API_KEY,
@@ -136,3 +138,4 @@ async def transform_image_to_qrcode(request: ImageTransformRequest):
         "transformed_url": transformed_url,
         "qr_code_image": qr_img
     }
+
