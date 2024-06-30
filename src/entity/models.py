@@ -1,5 +1,5 @@
 import enum
-from datetime import date,datetime
+from datetime import date, datetime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import (
     String,
@@ -11,7 +11,6 @@ from sqlalchemy import (
     func,
     Table,
     Column,
-    JSON,
 )
 from sqlalchemy.orm import DeclarativeBase
 
@@ -26,12 +25,8 @@ class Todo(Base):
     title: Mapped[str] = mapped_column(String(50), index=True)
     description: Mapped[str] = mapped_column(String(250))
     completed: Mapped[bool] = mapped_column(default=False)
-    created_at: Mapped[date] = mapped_column(
-        DateTime, default=func.now(), nullable=True
-    )
-    updated_at: Mapped[date] = mapped_column(
-        DateTime, default=func.now(), onupdate=func.now(), nullable=True
-    )
+    created_at: Mapped[date] = mapped_column(DateTime, default=func.now(), nullable=True)
+    updated_at: Mapped[date] = mapped_column(DateTime, default=func.now(), onupdate=func.now(), nullable=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
     user: Mapped["User"] = relationship("User", back_populates="todos", lazy="joined")
 
@@ -51,16 +46,12 @@ class User(Base):
     avatar: Mapped[str] = mapped_column(String(255), nullable=True)
     refresh_token: Mapped[str] = mapped_column(String(255), nullable=True)
     created_at: Mapped[date] = mapped_column(DateTime, default=func.now())
-    updated_at: Mapped[date] = mapped_column(
-        DateTime, default=func.now(), onupdate=func.now()
-    )
-    role: Mapped[Role] = mapped_column(
-        Enum(Role), default=Role.user, nullable=True
-    )
+    updated_at: Mapped[date] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
+    role: Mapped[Role] = mapped_column(Enum(Role), default=Role.user, nullable=True)
     confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=True)
-    todos: Mapped["Todo"] = relationship("Todo", back_populates="user", lazy="joined")
-    photos: Mapped["Photo"] = relationship("Photo", back_populates="user", lazy="joined")
-    comments: Mapped["Comment"] = relationship("Comment", back_populates="user", lazy="joined")
+    todos: Mapped[list["Todo"]] = relationship("Todo", back_populates="user", lazy="joined")
+    photos: Mapped[list["Photo"]] = relationship("Photo", back_populates="user", lazy="joined")
+    comments: Mapped[list["Comment"]] = relationship("Comment", back_populates="user", lazy="joined")
 
 
 class Photo(Base):
@@ -69,22 +60,18 @@ class Photo(Base):
     url: Mapped[str] = mapped_column(String, index=True, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=True)
     created_at: Mapped[date] = mapped_column(DateTime, default=func.now())
-    updated_at: Mapped[date] = mapped_column(
-        DateTime, default=func.now(), onupdate=func.now()
-    )
+    updated_at: Mapped[date] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     user: Mapped["User"] = relationship("User", back_populates="photos", lazy="joined")
-    tags: Mapped["Tag"] = relationship("Tag", secondary="photo_tags", back_populates="photos")
-    comments: Mapped["Comment"] = relationship("Comment", back_populates="photo", lazy="joined")
+    tags: Mapped[list["Tag"]] = relationship("Tag", secondary="photo_tags", back_populates="photos", lazy="selectin")
+    comments: Mapped[list["Comment"]] = relationship("Comment", back_populates="photo", lazy="joined")
 
 
 class Tag(Base):
     __tablename__ = "tags"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=True)
-    photos: Mapped["Photo"] = relationship(
-        "Photo", secondary="photo_tags", back_populates="tags"
-    )
+    photos: Mapped[list["Photo"]] = relationship("Photo", secondary="photo_tags", back_populates="tags")
 
 
 photo_tags = Table(
@@ -100,9 +87,7 @@ class Comment(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     content: Mapped[str] = mapped_column(String(500))
     created_at: Mapped[date] = mapped_column(DateTime, default=func.now())
-    updated_at: Mapped[date] = mapped_column(
-        DateTime, default=func.now(), onupdate=func.now()
-    )
+    updated_at: Mapped[date] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     user: Mapped["User"] = relationship("User", back_populates="comments", lazy="joined")
     photo_id: Mapped[int] = mapped_column(ForeignKey("photos.id"))

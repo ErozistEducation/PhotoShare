@@ -1,7 +1,6 @@
 import urllib
 import cloudinary.uploader
 import qrcode
-
 from fastapi import APIRouter, HTTPException, Depends, status, UploadFile, File
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,8 +11,7 @@ from src.entity.models import User
 from src.schemas.photo import PhotoCreate, PhotoUpdate, PhotoResponse
 from src.services.auth import auth_service
 from src.services.cloudinary import upload_image
-from src.repository.photos import create_photo, update_photo, delete_photo, get_photo, get_photos, \
-    save_transformation_to_db
+from src.repository.photos import create_photo, update_photo, get_photo, get_photos, delete_photo as delete_photo_db, save_transformation_to_db
 
 router = APIRouter(prefix='/photos', tags=['photos'])
 
@@ -50,12 +48,12 @@ async def update_photo_details(
 
 
 @router.delete("/{photo_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delet_photo(
+async def delete_photo(
         photo_id: int,
         user: User = Depends(auth_service.get_current_user),
         db: AsyncSession = Depends(get_db)
 ):
-    deleted_photo = await delete_photo(photo_id, user, db)
+    deleted_photo = await delete_photo_db(photo_id, user, db)
     if not deleted_photo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found")
     return None
@@ -64,15 +62,16 @@ async def delet_photo(
 @router.get("/{photo_id}", response_model=PhotoResponse)
 async def get_photo_details(
         photo_id: int,
+        user: User = Depends(auth_service.get_current_user),
         db: AsyncSession = Depends(get_db)
 ):
-    photo = await get_photo(photo_id, db)
+    photo = await get_photo(photo_id, user, db)
     if not photo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found")
     return photo
 
 
-@router.get("/", response_model=list[PhotoResponse])
+@router.get("/", response_model=List[PhotoResponse])
 async def list_photos(
         user: User = Depends(auth_service.get_current_user),
         db: AsyncSession = Depends(get_db)
@@ -80,46 +79,20 @@ async def list_photos(
     return await get_photos(user, db)
 
 
-@router.get("/transform-image/{image_id}")
-def transform_image(image_id: str, width: int = 500, height: int = 500,
-                    crop_mode: str = None,
-                    rotation: int = 0, filter_type: str = None, overlay_text: str = None):
-    cloudinary_params = {
-        "api_key": config.CLOUDINARY_API_KEY,
-        "width": width,
-        "height": height,
-        "crop": crop_mode,  # параметр для режиму обрізки
-        "angle": rotation,  # кут повороту (градуси)
-        "overlay": overlay_text,  # текст на фото
-        "effect": filter_type,  # параметр для фільтрів
-    }
-    cloudinary_url = f"{config.CLOUDINARY_BASE_URL}/image/upload/{image_id}.jpg"
-    transformed_url = f"{cloudinary_url}?{urllib.parse.urlencode(cloudinary_params)}"
-    return {"transformed_url": transformed_url}
-
-
-
-
-
 @router.post("/transform-image/")
 async def transform_image(request: ImageTransformRequest):
-    # Конфігурація Cloudinary
     cloudinary.config(
         cloud_name=config.CLOUDINARY_NAME,
         api_key=config.CLOUDINARY_API_KEY,
         api_secret=config.CLOUDINARY_API_SECRET
     )
 
-    # Виконання трансформації зображення за допомогою Cloudinary API
     transformed_url = cloudinary.uploader.upload(request.image_url, **request.transformations)["url"]
 
-    # Генерація унікального ідентифікатора для цього запиту на трансформацію
     transformation_id = "unique_identifier_for_this_transformation"
 
-    # Збереження деталей трансформації в базу даних (псевдокод)
     save_transformation_to_db(transformation_id, transformed_url, request.transformations)
 
-    # Генерація QR-коду для URL трансформованого зображення
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -130,7 +103,6 @@ async def transform_image(request: ImageTransformRequest):
     qr.make(fit=True)
     qr_img = qr.make_image(fill_color="black", back_color="white")
 
-    # Повернення URL трансформованого зображення та самого QR-коду як відповідь
     return {
         "transformed_url": transformed_url,
         "qr_code_image": qr_img
