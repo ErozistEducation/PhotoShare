@@ -1,58 +1,62 @@
 import pickle
-
-import cloudinary
-import cloudinary.uploader
-from fastapi import APIRouter,HTTPException,Depends,status,Path,Query,UploadFile,File
-
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
 from fastapi_limiter.depends import RateLimiter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.db import get_db
-from src.entity.models import User
-from src.schemas.user import UserResponse
+from src.entity.models import User,Role
+from src.schemas.user import UserResponse, UserProfileResponse,UserUpdateSchema
 from src.services.auth import auth_service
-from src.conf.config import config
+from src.services.cloudinary import upload_image
 from src.repository import users as repositories_users
+from src.services.roles import RoleAccess
 
 
 router = APIRouter(prefix="/users", tags=["users"])
-cloudinary.config(cloud_name=config.CLOUDINARY_NAME,api_key=config.CLOUDINARY_API_KEY,api_secret=config.CLOUDINARY_API_SECRET, secure=True)
+
+access_to_route_all = RoleAccess([Role.admin, Role.moderator])
+access_to_route_admin = RoleAccess([Role.admin])
 
 
-@router.get("/me/",response_model=UserResponse)
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    dependencies=[Depends(RateLimiter(times=1, seconds=60))],
+)
 async def get_current_user(user: User = Depends(auth_service.get_current_user)):
-    """
-    The get_current_user function is a dependency that will be injected into the
-        get_current_user endpoint. It uses the auth_service to retrieve the current user,
-        and returns it if found.
-    
-    :param user: User: Get the user object from the auth_service
-    :return: The current user
-    :doc-author: Trelent
-    """
     return user
 
 
+@router.patch("/avatar", response_model=UserResponse, dependencies=[Depends(RateLimiter(times=1, seconds=60))],)
+async def update_avatar(file: UploadFile = File(), user: User = Depends(auth_service.get_current_user),
+                        db: AsyncSession = Depends(get_db)):
+    res_url = upload_image(file.file)
+    user = await repositories_users.update_avatar_url(user.email, res_url, db)
+    auth_service.cache.set(user.email, pickle.dumps(user))
+    auth_service.cache.expire(user.email, 300)
+    return user
 
-@router.patch("/avatar", response_model=UserResponse)
-async def update_avatar(file: UploadFile = File(), user: User = Depends(auth_service.get_current_user), db: AsyncSession = Depends(get_db)):
-    """
-    The update_avatar function is used to update the avatar of a user.
-        The function takes in an UploadFile object, which contains the file that will be uploaded to Cloudinary.
-        It also takes in a User object, which is obtained from auth_service's get_current_user function. This ensures that only authenticated users can access this endpoint and change their own avatar image.
-        Finally, it takes in an AsyncSession object for database access.
-    
-    :param file: UploadFile: Get the file from the request
-    :param user: User: Get the current user
-    :param db: AsyncSession: Get the database session
-    :return: A user object
-    :doc-author: Trelent
-    """
-    try:
-        public_id = f"hm13{user.email}"
-        res = cloudinary.uploader.upload(file.file, public_id=public_id, overwrite=True)
-        res_url = cloudinary.CloudinaryImage(public_id).build_url(width=250, height=250, crop="fill", version=res.get("version"))
-        user = await repositories_users.update_avatar_url(user.email, res_url, db)
-        return user
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+@router.get("/profile/{username}", response_model=UserProfileResponse)
+async def get_user_profile(username: str, db: AsyncSession = Depends(get_db),current_user: User = Depends(auth_service.get_current_user)):
+    user_profile =  await repositories_users.get_user_profile(username, db)
+    if user_profile is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user_profile
+
+
+@router.put("/profile/me", response_model=UserProfileResponse)
+async def update_own_profile(body: UserUpdateSchema,user: User = Depends(auth_service.get_current_user),db: AsyncSession = Depends(get_db)):
+    user_profile =  await repositories_users.update_own_profile(body,user, db,)
+    if user_profile is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user_profile
+
+
+@router.put("/admin/ban/{user_id}",dependencies=[Depends(access_to_route_all)],response_model=dict)
+async def ban_user(user_id: int, user: User = Depends(auth_service.get_current_user), db: AsyncSession = Depends(get_db)):
+    user_in_db =  await repositories_users.ban_user( user_id , db)
+    # role_access:bool = Depends(RoleAccess([Role.admin]))
+    if user_in_db is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user_in_db
