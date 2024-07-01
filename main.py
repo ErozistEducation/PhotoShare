@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
 
 from src.database.db import get_db
-from src.routes import todos, auth, users, photos, comments, posts
+from src.routes import  auth, users, photos, comments, posts
 from src.conf.config import config
 
 @asynccontextmanager
@@ -104,7 +104,6 @@ app.mount("/static", StaticFiles(directory=directory), name="static")
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
-app.include_router(todos.router, prefix="/api")
 app.include_router(photos.router, prefix="/api")
 app.include_router(comments.router, prefix="/api")
 app.include_router(posts.router, prefix="/api")
@@ -113,12 +112,30 @@ templates = Jinja2Templates(directory=BASE_DIR / "src" / "templates")
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
+    """
+    The index function renders the index.html template and returns it as an HTML response.
+
+    :param request: Request: The incoming HTTP request
+    :return: A TemplateResponse object containing the rendered HTML template
+    :doc-author: Trelent
+    """
     return templates.TemplateResponse(
         "index.html", {"request": request, "our": "Build group"}
     )
 
+
 @app.get("/api/healthchecker")
 async def healthchecker(db: AsyncSession = Depends(get_db)):
+    """
+    The healthchecker function checks the database connection and returns a message indicating the status.
+        If the database connection is successful, it returns a welcome message.
+        If the database connection fails, it raises an HTTPException with a 500 status code.
+    
+    :param db: AsyncSession: The database session to use for the operation
+    :return: A dictionary containing a welcome message
+    :raises HTTPException: If there is an error connecting to the database or if the database is not configured correctly
+    :doc-author: Trelent
+    """
     try:
         result = await db.execute(text("SELECT 1"))
         result = result.fetchone()
@@ -133,3 +150,4 @@ async def healthchecker(db: AsyncSession = Depends(get_db)):
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8000)), log_level="info")
+    

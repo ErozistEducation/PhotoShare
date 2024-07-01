@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     CLOUDINARY_NAME: str
     CLOUDINARY_API_KEY: int
     CLOUDINARY_API_SECRET: str
-    CLOUDINARY_BASE_URL: str
+  
 
 
     model_config = ConfigDict(

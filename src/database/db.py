@@ -13,6 +13,15 @@ class DatabaseSessionManager:
 
     @contextlib.asynccontextmanager
     async def session(self):
+        """
+        The session function is a context manager that provides a transactional scope around a series of operations.
+        It will automatically rollback the session if an exception occurs, or commit the session otherwise.
+        
+        :param self: Represent the instance of the class
+        :return: A context manager
+        
+        """
+ 
         if self._session_maker is None:
             raise Exception("Session is not initialized")
         session = self._session_maker()
@@ -30,5 +39,12 @@ sessionmanager = DatabaseSessionManager(config.DATABASE_URL)
 
 
 async def get_db():
+    """
+    The get_db function is a coroutine that returns an async context manager.
+    The context manager yields a database session, which can be used to query the database.
+    When the block of code exits, the session is automatically closed.
+    
+    :return: A generator object
+    """
     async with sessionmanager.session() as session:
         yield session
