@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
 
 from src.database.db import get_db
-from src.routes import todos, auth, users, photos, comments
+from src.routes import todos, auth, users, photos, comments, posts
 from src.conf.config import config
 
 @asynccontextmanager
@@ -107,6 +107,7 @@ app.include_router(users.router, prefix="/api")
 app.include_router(todos.router, prefix="/api")
 app.include_router(photos.router, prefix="/api")
 app.include_router(comments.router, prefix="/api")
+app.include_router(posts.router, prefix="/api")
 
 templates = Jinja2Templates(directory=BASE_DIR / "src" / "templates")
 

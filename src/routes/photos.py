@@ -1,18 +1,18 @@
-import urllib
 import logging
 from fastapi import APIRouter, HTTPException, Depends, status, UploadFile, File
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
 
-from src.conf.config import config
 from src.database.db import get_db
 from src.entity.models import User
-from src.schemas.photo import PhotoCreate, PhotoUpdate, PhotoResponse2, PhotoBase, PhotoResponse
+from src.schemas.photo import PhotoCreate, PhotoUpdate, PhotoResponse2, PhotoBase, PhotoResponse, TransformationParams
 from src.services.auth import auth_service
-from src.services.cloudinary import upload_image
-from src.repository.photos import create_photo, update_photo, delete_photo, get_photo, get_photos, add_tags_to_photo, remove_tags_from_photo
+from src.services.cloudinary import upload_image, transform_image
+from src.repository.photos import create_photo, update_photo, delete_photo, get_photo, get_photos, add_tags_to_photo, remove_tags_from_photo, generate_qr_code
 
 router = APIRouter(prefix='/photos', tags=['photos'])
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -106,99 +106,132 @@ async def remove_tags(photo_id: int,
 
 #############################
 
-import cloudinary.uploader
-import qrcode
-from typing import Dict
-from pydantic import BaseModel
-from src.repository.photos import save_transformation_to_db
+@router.post("/{photo_id}/transform", response_model=str, status_code=status.HTTP_200_OK)
+async def transform_photo(
+    photo_id: int,
+    transformation_params: TransformationParams,
+    user: User = Depends(auth_service.get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    photo = await get_photo(photo_id, db)
+    if not photo or photo.user_id != user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found or access denied")
+
+    transformed_url = transform_image(photo.url, transformation_params.model_dump(exclude_unset=True))
+    if transformed_url == photo.url:
+        logger.error(f"Transformation did not change the URL: {transformed_url}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Transformation failed")
+
+    return transformed_url
 
 
-class ImageTransformRequest(BaseModel):
-    image_url: str
-    transformations: Dict[str, str]
+@router.post("/qr-code", response_model=str, status_code=status.HTTP_201_CREATED)
+async def create_qr_code(
+    photo_id: int,
+    user: User = Depends(auth_service.get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    photo = await get_photo(photo_id, db)
+    if not photo or photo.user_id != user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found or access denied")
+    
+    qr_code_image = generate_qr_code(photo.url)
+    return StreamingResponse(qr_code_image, media_type="image/jpg")
+
+#############################
+# import cloudinary.uploader
+# import qrcode
+# from typing import Dict
+# from pydantic import BaseModel
+# from src.repository.photos import save_transformation_to_db
 
 
-@router.get("/transform-image/{image_id}")
-def transform_image(image_id: str, width: int = 500, height: int = 500,
-                    crop_mode: str = None,
-                    rotation: int = 0, filter_type: str = None, overlay_text: str = None):
-    cloudinary_params = {
-        "api_key": config.CLOUDINARY_API_KEY,
-        "width": width,
-        "height": height,
-        "crop": crop_mode,  # параметр для режиму обрізки
-        "angle": rotation,  # кут повороту (градуси)
-        "overlay": overlay_text,  # текст на фото
-        "effect": filter_type,  # параметр для фільтрів
-    }
-    cloudinary_url = f"{config.CLOUDINARY_BASE_URL}/image/upload/{image_id}.jpg"
-    transformed_url = f"{cloudinary_url}?{urllib.parse.urlencode(cloudinary_params)}"
-    return {"transformed_url": transformed_url}
+# class ImageTransformRequest(BaseModel):
+#     image_url: str
+#     transformations: Dict[str, str]
+
+
+# # @router.get("/transform-image/{image_id}")
+# # def transform_image(image_id: str, width: int = 500, height: int = 500,
+# #                     crop_mode: str = None,
+# #                     rotation: int = 0, filter_type: str = None, overlay_text: str = None):
+# #     cloudinary_params = {
+# #         "api_key": config.CLOUDINARY_API_KEY,
+# #         "width": width,
+# #         "height": height,
+# #         "crop": crop_mode,  # параметр для режиму обрізки
+# #         "angle": rotation,  # кут повороту (градуси)
+# #         "overlay": overlay_text,  # текст на фото
+# #         "effect": filter_type,  # параметр для фільтрів
+# #     }
+# #     cloudinary_url = f"{config.CLOUDINARY_BASE_URL}/image/upload/{image_id}.jpg"
+# #     transformed_url = f"{cloudinary_url}?{urllib.parse.urlencode(cloudinary_params)}"
+# #     return {"transformed_url": transformed_url}
 
 
 
-@router.post("/transform-image2/")
-async def transform_image2(request: ImageTransformRequest):
-    # Конфігурація Cloudinary
-    cloudinary.config(
-        cloud_name=config.CLOUDINARY_NAME,
-        api_key=config.CLOUDINARY_API_KEY,
-        api_secret=config.CLOUDINARY_API_SECRET
-    )
+# @router.post("/transform-image2/")
+# async def transform_image2(request: ImageTransformRequest):
+#     # Конфігурація Cloudinary
+#     cloudinary.config(
+#         cloud_name=config.CLOUDINARY_NAME,
+#         api_key=config.CLOUDINARY_API_KEY,
+#         api_secret=config.CLOUDINARY_API_SECRET
+#     )
 
-    # Виконання трансформації зображення за допомогою Cloudinary API
-    transformed_url = cloudinary.uploader.upload(request.image_url, **request.transformations)["url"]
+#     # Виконання трансформації зображення за допомогою Cloudinary API
+#     transformed_url = cloudinary.uploader.upload(request.image_url, **request.transformations)["url"]
 
-    # Генерація унікального ідентифікатора для цього запиту на трансформацію
-    transformation_id = "unique_identifier_for_this_transformation"
+#     # Генерація унікального ідентифікатора для цього запиту на трансформацію
+#     transformation_id = "unique_identifier_for_this_transformation"
 
-    # Збереження деталей трансформації в базу даних (псевдокод)
-    save_transformation_to_db(transformation_id, transformed_url, request.transformations)
+#     # Збереження деталей трансформації в базу даних (псевдокод)
+#     save_transformation_to_db(transformation_id, transformed_url, request.transformations)
 
-    # Генерація QR-коду для URL трансформованого зображення
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=10,
-        border=4,
-    )
-    qr.add_data(transformed_url)
-    qr.make(fit=True)
-    qr_img = qr.make_image(fill_color="black", back_color="white")
+#     # Генерація QR-коду для URL трансформованого зображення
+#     qr = qrcode.QRCode(
+#         version=1,
+#         error_correction=qrcode.constants.ERROR_CORRECT_L,
+#         box_size=10,
+#         border=4,
+#     )
+#     qr.add_data(transformed_url)
+#     qr.make(fit=True)
+#     qr_img = qr.make_image(fill_color="black", back_color="white")
 
-    # Повернення URL трансформованого зображення та самого QR-коду як відповідь
-    return {
-        "transformed_url": transformed_url,
-        "qr_code_image": qr_img
-    }
+#     # Повернення URL трансформованого зображення та самого QR-коду як відповідь
+#     return {
+#         "transformed_url": transformed_url,
+#         "qr_code_image": qr_img
+#     }
 
 
-@router.post("/transform-image3/")
-async def transform_image3(request: ImageTransformRequest):
-    cloudinary.config(
-        cloud_name=config.CLOUDINARY_NAME,
-        api_key=config.CLOUDINARY_API_KEY,
-        api_secret=config.CLOUDINARY_API_SECRET
-    )
+# @router.post("/transform-image3/")
+# async def transform_image3(request: ImageTransformRequest):
+#     cloudinary.config(
+#         cloud_name=config.CLOUDINARY_NAME,
+#         api_key=config.CLOUDINARY_API_KEY,
+#         api_secret=config.CLOUDINARY_API_SECRET
+#     )
 
-    transformed_url = cloudinary.uploader.upload(request.image_url, **request.transformations)["url"]
+#     transformed_url = cloudinary.uploader.upload(request.image_url, **request.transformations)["url"]
 
-    transformation_id = "unique_identifier_for_this_transformation"
+#     transformation_id = "unique_identifier_for_this_transformation"
 
-    save_transformation_to_db(transformation_id, transformed_url, request.transformations)
+#     save_transformation_to_db(transformation_id, transformed_url, request.transformations)
 
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=10,
-        border=4,
-    )
-    qr.add_data(transformed_url)
-    qr.make(fit=True)
-    qr_img = qr.make_image(fill_color="black", back_color="white")
+#     qr = qrcode.QRCode(
+#         version=1,
+#         error_correction=qrcode.constants.ERROR_CORRECT_L,
+#         box_size=10,
+#         border=4,
+#     )
+#     qr.add_data(transformed_url)
+#     qr.make(fit=True)
+#     qr_img = qr.make_image(fill_color="black", back_color="white")
 
-    return {
-        "transformed_url": transformed_url,
-        "qr_code_image": qr_img
-    }
+#     return {
+#         "transformed_url": transformed_url,
+#         "qr_code_image": qr_img
+#     }
 

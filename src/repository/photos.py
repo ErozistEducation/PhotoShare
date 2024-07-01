@@ -1,6 +1,8 @@
 import logging
-from typing import Dict, List
 
+import qrcode
+import io
+from typing import Dict, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
@@ -138,9 +140,34 @@ async def remove_tags_from_photo(photo_id: int, tags: List[str], user: User, db:
     logger.debug("Tags removed successfully from photo ID: %d for user: %d", photo_id, user.id)
     return photo
 
+#####################
+
+def generate_qr_code(data: str):
+    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
+    qr.add_data(data)
+    qr.make(fit=True)
+    
+    img = qr.make_image(fill='black', back_color='white')
+    buffer = io.BytesIO()
+    img.save(buffer)
+    buffer.seek(0)
+    return buffer
 
 
 #####################
+
+async def save_photo(db: AsyncSession, url: str) -> Photo:
+    new_photo = Photo(url=url)
+    db.add(new_photo)
+    await db.commit()
+    await db.refresh(new_photo)
+    return new_photo
+
+
+
+
+
+
 transformations_db = {}
 
 

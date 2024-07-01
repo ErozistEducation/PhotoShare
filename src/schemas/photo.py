@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, conint
+
 
 class PhotoBase(BaseModel):
     url: str
@@ -11,7 +12,6 @@ class PhotoCreate(PhotoBase):
 
 class PhotoUpdate(BaseModel):
     description: Optional[str] = None
-    # tags: Optional[List[str]] = []
 
 class TagBase(BaseModel):
     id: int
@@ -35,3 +35,15 @@ class PhotoResponse2(PhotoBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+
+
+from pydantic import BaseModel, Field, conint
+from typing import Optional
+
+class TransformationParams(BaseModel):
+    width: Optional[conint(ge=1)] = None
+    height: Optional[conint(ge=1)] = None
+    crop: Optional[str] = None
+    quality: Optional[conint(ge=1, le=100)] = None
+    format: Optional[str] = None
+    angle: Optional[int] = None
