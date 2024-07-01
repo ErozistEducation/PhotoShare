@@ -1,7 +1,6 @@
-import logging
-
-import qrcode
 import io
+import logging
+import qrcode
 from typing import Dict, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -11,9 +10,9 @@ from src.entity.models import Photo, Tag, User
 from src.schemas.photo import PhotoCreate, PhotoUpdate
 
 
-
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
+
 
 async def create_photo(photo_data: PhotoCreate, user: User, db: AsyncSession):
     new_photo = Photo(
@@ -24,7 +23,7 @@ async def create_photo(photo_data: PhotoCreate, user: User, db: AsyncSession):
     if photo_data.tags:
         tags = await get_or_create_tags(photo_data.tags, db)
         new_photo.tags.extend(tags)
-    
+
     db.add(new_photo)
     await db.commit()
     await db.refresh(new_photo)
@@ -42,6 +41,7 @@ async def update_photo(photo_id: int, photo_data: PhotoUpdate, user: User, db: A
         await db.refresh(photo)
     return photo
 
+
 async def delete_photo(photo_id: int, user: User, db: AsyncSession):
     stmt = select(Photo).filter_by(id=photo_id, user_id=user.id).options(joinedload(Photo.tags))
     result = await db.execute(stmt)
@@ -51,11 +51,13 @@ async def delete_photo(photo_id: int, user: User, db: AsyncSession):
         await db.commit()
     return photo
 
+
 async def get_photo(photo_id: int, db: AsyncSession):
     stmt = select(Photo).filter_by(id=photo_id).options(joinedload(Photo.tags))
     result = await db.execute(stmt)
     photo = result.unique().scalar_one_or_none()
     return photo
+
 
 async def get_photos(user: User, db: AsyncSession):
     stmt = select(Photo).filter_by(user_id=user.id).options(joinedload(Photo.tags))
@@ -105,6 +107,7 @@ async def get_or_create_tags(tag_names: List[str], db: AsyncSession):
             logger.debug("New tag created: %s", tag_name)
     return tags
 
+
 async def validate_tags(photo: Photo, new_tags: List[str]):
     existing_tags = {tag.name for tag in photo.tags}
     unique_new_tags = [tag for tag in new_tags if tag not in existing_tags]
@@ -117,6 +120,7 @@ async def validate_tags(photo: Photo, new_tags: List[str]):
         raise ValueError("All tags already exist for this photo")
 
     return unique_new_tags
+
 
 async def remove_tags_from_photo(photo_id: int, tags: List[str], user: User, db: AsyncSession):
     logger.debug("Received request to remove tags from photo with ID: %d for user: %d", photo_id, user.id)
@@ -140,38 +144,15 @@ async def remove_tags_from_photo(photo_id: int, tags: List[str], user: User, db:
     logger.debug("Tags removed successfully from photo ID: %d for user: %d", photo_id, user.id)
     return photo
 
-#####################
 
 def generate_qr_code(data: str):
     qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
     qr.add_data(data)
     qr.make(fit=True)
-    
+
     img = qr.make_image(fill='black', back_color='white')
     buffer = io.BytesIO()
     img.save(buffer)
     buffer.seek(0)
     return buffer
 
-
-#####################
-
-async def save_photo(db: AsyncSession, url: str) -> Photo:
-    new_photo = Photo(url=url)
-    db.add(new_photo)
-    await db.commit()
-    await db.refresh(new_photo)
-    return new_photo
-
-
-
-
-
-
-transformations_db = {}
-
-
-def save_transformation_to_db(transformation_id: str,
-                              transformed_url: str,
-                              transformations: Dict[str, str]):
-    transformations_db[transformation_id] = {'transformed_url': transformed_url,'transformations': transformations}

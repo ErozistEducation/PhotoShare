@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from libgravatar import Gravatar
 from sqlalchemy.orm import joinedload
+
 from src.database.db import get_db
 from src.entity.models import User, Role
 from src.schemas.user import UserSchema, UserProfileResponse,UserUpdateSchema
@@ -14,6 +15,7 @@ async def get_user_by_email(email: str, db: AsyncSession):
     result = await db.execute(stmt)
     user = result.scalars().first()
     return user
+
 
 async def create_user(body: UserSchema, role: Role, db: AsyncSession = Depends(get_db)) -> User:
    
@@ -36,14 +38,17 @@ async def create_user(body: UserSchema, role: Role, db: AsyncSession = Depends(g
     await db.refresh(new_user)
     return new_user
 
+
 async def update_token(user: User, token: str | None, db: AsyncSession):
     user.refresh_token = token
     await db.commit()
+
 
 async def confirmed_email(email: str, db: AsyncSession) -> None:
     user = await get_user_by_email(email, db)
     user.confirmed = True
     await db.commit()
+
 
 async def update_avatar_url(email: str, url: str | None, db: AsyncSession) -> User:
     user = await get_user_by_email(email, db)
@@ -51,6 +56,7 @@ async def update_avatar_url(email: str, url: str | None, db: AsyncSession) -> Us
     await db.commit()
     await db.refresh(user)
     return user
+
 
 async def get_user_by_username(username: str, db: AsyncSession) -> User:
     result = await db.execute(select(User).where(User.username == username))

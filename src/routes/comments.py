@@ -7,7 +7,9 @@ from src.entity.models import Comment, Photo, User
 from src.schemas.comment import CommentCreate, CommentUpdate, CommentResponse
 from src.services.auth import auth_service
 
+
 router = APIRouter(prefix="/comments", tags=["comments"])
+
 
 @router.post("/", response_model=CommentResponse, status_code=status.HTTP_201_CREATED)
 async def create_comment(
