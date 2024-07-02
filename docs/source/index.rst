@@ -1,14 +1,16 @@
-.. Todo project documentation master file, created by
-   sphinx-quickstart on Tue Dec 26 19:40:01 2023.
+.. PHOTOSHARE documentation master file, created by
+   sphinx-quickstart on Mon Jul  1 21:42:13 2024.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Todo project's documentation!
-========================================
+Welcome to PHOTOSHARE's documentation!
+======================================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
+
 
 
 REST API main
@@ -19,9 +21,9 @@ REST API main
   :show-inheritance:
 
 
-REST API repository TODOS
-=========================
-.. automodule:: src.repository.todos
+REST API repository Photos
+=============================
+.. automodule:: src.repository.photos
   :members:
   :undoc-members:
   :show-inheritance:
@@ -29,16 +31,8 @@ REST API repository TODOS
 
 
 REST API repository Users
-=========================
+==========================
 .. automodule:: src.repository.users
-  :members:
-  :undoc-members:
-  :show-inheritance:
-
-
-REST API routes TODOs
-=========================
-.. automodule:: src.routes.todos
   :members:
   :undoc-members:
   :show-inheritance:
@@ -47,6 +41,31 @@ REST API routes TODOs
 REST API routes Auth
 =========================
 .. automodule:: src.routes.auth
+  :members:
+  :undoc-members:
+  :show-inheritance:
+
+
+REST API routes Comments
+==========================
+.. automodule:: src.routes.comments
+  :members:
+  :undoc-members:
+  :show-inheritance:
+
+
+
+REST API routes Photos
+=========================
+.. automodule:: src.routes.photos
+  :members:
+  :undoc-members:
+  :show-inheritance:
+
+
+REST API routes Posts
+=========================
+.. automodule:: src.routes.posts
   :members:
   :undoc-members:
   :show-inheritance:
@@ -68,6 +87,13 @@ REST API service Auth
   :show-inheritance:
 
 
+REST API service Cloudinary
+===============================
+.. automodule:: src.services.cloudinary
+  :members:
+  :undoc-members:
+  :show-inheritance:
+
 REST API service Email
 =========================
 .. automodule:: src.services.email
@@ -76,8 +102,16 @@ REST API service Email
   :show-inheritance:
 
 
+REST API service Roles
+=========================
+.. automodule:: src.services.roles
+  :members:
+  :undoc-members:
+  :show-inheritance:
+
+
 Indices and tables
-==================
+===================
 
 * :ref:`genindex`
 * :ref:`modindex`

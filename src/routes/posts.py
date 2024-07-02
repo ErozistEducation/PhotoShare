@@ -26,6 +26,14 @@ async def get_posts(
     user: User = Depends(auth_service.get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    """
+    The get_posts function retrieves all posts (photos) uploaded by the current user along with their details.
+
+    :param user: User: The current user whose posts are to be retrieved
+    :param db: AsyncSession: The database session to use for the operation
+    :return: A list of PostResponse objects containing the post details
+    :doc-author: Trelent
+    """
     stmt = (
         select(Photo)
         .filter_by(user_id=user.id)
