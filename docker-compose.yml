@@ -3,7 +3,7 @@ version: '3.8'
 services:
   web:
     build: .
-    container_name: my-fastapi-project-app
+    container_name: my-fastapi-project
     ports:
       - "8000:8000"
     depends_on:
@@ -33,12 +33,13 @@ services:
       - .:/app
 
   redis:
-    image: redis:6.2
+    image: redis:alpine
     ports:
       - "6379:6379"
+    command: redis-server
 
   postgres:
-    image: postgres:13
+    image: postgres:16
     ports:
       - "5432:5432"
     environment:
