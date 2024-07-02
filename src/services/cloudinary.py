@@ -3,7 +3,7 @@ import cloudinary.uploader
 from src.conf.config import config
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 
 cloudinary.config(
@@ -11,6 +11,7 @@ cloudinary.config(
     api_key=config.CLOUDINARY_API_KEY,
     api_secret=config.CLOUDINARY_API_SECRET
 )
+
 
 def upload_image(file):
     """
@@ -34,7 +35,7 @@ def transform_image(image_url: str, transformation_params: dict):
     :doc-author: Trelent
     """
     logger.debug(f"Transforming image: {image_url} with params: {transformation_params}")
-    
+
     default_params = {
         'width': None,
         'height': None,

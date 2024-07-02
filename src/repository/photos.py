@@ -1,7 +1,6 @@
-import logging
-
-import qrcode
 import io
+import logging
+import qrcode
 from typing import Dict, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -11,9 +10,9 @@ from src.entity.models import Photo, Tag, User
 from src.schemas.photo import PhotoCreate, PhotoUpdate
 
 
-
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
+
 
 async def create_photo(photo_data: PhotoCreate, user: User, db: AsyncSession):
     """
@@ -32,7 +31,7 @@ async def create_photo(photo_data: PhotoCreate, user: User, db: AsyncSession):
     if photo_data.tags:
         tags = await get_or_create_tags(photo_data.tags, db)
         new_photo.tags.extend(tags)
-    
+
     db.add(new_photo)
     await db.commit()
     await db.refresh(new_photo)
@@ -59,6 +58,7 @@ async def update_photo(photo_id: int, photo_data: PhotoUpdate, user: User, db: A
         await db.refresh(photo)
     return photo
 
+
 async def delete_photo(photo_id: int, user: User, db: AsyncSession):
     """
     The delete_photo function deletes an existing photo from the database.
@@ -76,6 +76,7 @@ async def delete_photo(photo_id: int, user: User, db: AsyncSession):
         await db.commit()
     return photo
 
+
 async def get_photo(photo_id: int, db: AsyncSession):
     """
     The get_photo function retrieves a photo by its ID from the database.
@@ -88,6 +89,7 @@ async def get_photo(photo_id: int, db: AsyncSession):
     result = await db.execute(stmt)
     photo = result.unique().scalar_one_or_none()
     return photo
+
 
 async def get_photos(user: User, db: AsyncSession):
     """
@@ -160,6 +162,7 @@ async def get_or_create_tags(tag_names: List[str], db: AsyncSession):
             logger.debug("New tag created: %s", tag_name)
     return tags
 
+
 async def validate_tags(photo: Photo, new_tags: List[str]):
     """
     The validate_tags function validates and filters new tags for a photo.
@@ -180,6 +183,7 @@ async def validate_tags(photo: Photo, new_tags: List[str]):
         raise ValueError("All tags already exist for this photo")
 
     return unique_new_tags
+
 
 async def remove_tags_from_photo(photo_id: int, tags: List[str], user: User, db: AsyncSession):
     """
@@ -213,7 +217,6 @@ async def remove_tags_from_photo(photo_id: int, tags: List[str], user: User, db:
     logger.debug("Tags removed successfully from photo ID: %d for user: %d", photo_id, user.id)
     return photo
 
-#####################
 
 def generate_qr_code(data: str):
     """
@@ -225,46 +228,9 @@ def generate_qr_code(data: str):
     qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
     qr.add_data(data)
     qr.make(fit=True)
-    
+
     img = qr.make_image(fill='black', back_color='white')
     buffer = io.BytesIO()
     img.save(buffer)
     buffer.seek(0)
     return buffer
-
-
-#####################
-
-async def save_photo(db: AsyncSession, url: str) -> Photo:
-    """
-    The save_photo function saves a photo with the given URL to the database.
-
-    :param db: AsyncSession: The database session to use for the operation
-    :param url: str: The URL of the photo to save
-    :return: The newly saved photo object
-    """
-    new_photo = Photo(url=url)
-    db.add(new_photo)
-    await db.commit()
-    await db.refresh(new_photo)
-    return new_photo
-
-
-
-
-
-
-transformations_db = {}
-
-
-def save_transformation_to_db(transformation_id: str,
-                              transformed_url: str,
-                              transformations: Dict[str, str]):
-    """
-    The save_transformation_to_db function saves a transformation record to the in-memory database.
-
-    :param transformation_id: str: The unique identifier for the transformation
-    :param transformed_url: str: The URL of the transformed image
-    :param transformations: Dict[str, str]: The dictionary of transformations applied
-    """
-    transformations_db[transformation_id] = {'transformed_url': transformed_url,'transformations': transformations}

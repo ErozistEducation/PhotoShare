@@ -7,17 +7,21 @@ class PhotoBase(BaseModel):
     url: str
     description: Optional[str] = None
 
+
 class PhotoCreate(PhotoBase):
     tags: Optional[List[str]] = []
+
 
 class PhotoUpdate(BaseModel):
     description: Optional[str] = None
 
+
 class TagBase(BaseModel):
     id: int
     name: str
-    
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class PhotoResponse(BaseModel):
     id: int
@@ -28,6 +32,7 @@ class PhotoResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class PhotoResponse2(PhotoBase):
     id: int
     created_at: datetime
@@ -35,10 +40,6 @@ class PhotoResponse2(PhotoBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-
-from pydantic import BaseModel, Field, conint
-from typing import Optional
 
 class TransformationParams(BaseModel):
     width: Optional[conint(ge=1)] = None

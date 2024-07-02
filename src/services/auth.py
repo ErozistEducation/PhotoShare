@@ -99,7 +99,6 @@ class Auth:
         return encoded_refresh_token
 
 
-
     async def decode_refresh_token(self, refresh_token: str):
         """
         The decode_refresh_token function takes a refresh token and decodes it.

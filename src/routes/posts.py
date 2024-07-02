@@ -1,22 +1,25 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import joinedload, contains_eager
+from sqlalchemy.orm import joinedload
 from pydantic import BaseModel
 from typing import List
+
 from src.database.db import get_db
-from src.entity.models import Photo, User, Tag
+from src.entity.models import Photo, User
 from src.services.auth import auth_service
 from src.services.cloudinary import transform_image
 
 
 router = APIRouter(prefix='/posts', tags=['posts'])
 
+
 class PostResponse(BaseModel):
     author: str
     tags: List[str]
     ava: List[str]
     post: str
+
 
 @router.get("/", response_model=List[PostResponse])
 async def get_posts(

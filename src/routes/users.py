@@ -11,10 +11,12 @@ from src.services.cloudinary import upload_image
 from src.repository import users as repositories_users
 from src.services.roles import RoleAccess
 
+
 router = APIRouter(prefix="/users", tags=["users"])
 
 access_to_route_all = RoleAccess([Role.admin, Role.moderator])
 access_to_route_admin = RoleAccess([Role.admin])
+
 
 @router.get(
     "/me",
@@ -33,11 +35,8 @@ async def get_current_user(user: User = Depends(auth_service.get_current_user)):
     """
     return user
 
-@router.patch(
-    "/avatar",
-    response_model=UserResponse,
-    dependencies=[Depends(RateLimiter(times=1, seconds=60))],
-)
+
+@router.patch("/avatar", response_model=UserResponse, dependencies=[Depends(RateLimiter(times=1, seconds=60))],)
 async def update_avatar(file: UploadFile = File(), user: User = Depends(auth_service.get_current_user),
                         db: AsyncSession = Depends(get_db)):
     """
@@ -92,9 +91,7 @@ async def update_own_profile(body: UserUpdateSchema,user: User = Depends(auth_se
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user_profile
 
-    
-    
-    
+
 @router.put("/admin/ban/{user_id}",dependencies=[Depends(access_to_route_all)],response_model=dict)
 async def ban_user(user_id: int, user: User = Depends(auth_service.get_current_user), db: AsyncSession = Depends(get_db)):
     """
@@ -111,6 +108,3 @@ async def ban_user(user_id: int, user: User = Depends(auth_service.get_current_u
     if user_in_db is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user_in_db
-
-       
-  
