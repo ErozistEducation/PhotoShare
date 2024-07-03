@@ -9,7 +9,8 @@ from src.entity.models import User
 from src.schemas.photo import PhotoCreate, PhotoUpdate, PhotoResponse2, PhotoBase, PhotoResponse, TransformationParams
 from src.services.auth import auth_service
 from src.services.cloudinary import upload_image, transform_image
-from src.repository.photos import create_photo, update_photo, delete_photo, get_photo, get_photos, add_tags_to_photo, remove_tags_from_photo, generate_qr_code
+from src.repository.photos import (create_photo, update_photo, delete_photo_handler, get_photo, get_photos,
+                                   add_tags_to_photo, remove_tags_from_photo, generate_qr_code)
 
 
 router = APIRouter(prefix='/photos', tags=['photos'])
@@ -45,12 +46,12 @@ async def update_photo_description(
 
 
 @router.delete("/{photo_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delet_photo(
+async def delete_photo(
     photo_id: int,
     user: User = Depends(auth_service.get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    deleted_photo = await delete_photo(photo_id, user, db)
+    deleted_photo = await delete_photo_handler(photo_id, user, db)
     if not deleted_photo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found")
     return None
@@ -59,9 +60,10 @@ async def delet_photo(
 @router.get("/{photo_id}", response_model=PhotoResponse2)
 async def get_photo_details(
     photo_id: int,
+    user: User = Depends(auth_service.get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    photo = await get_photo(photo_id, db)
+    photo = await get_photo(photo_id, user, db)
     if not photo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found")
     return photo
@@ -135,7 +137,7 @@ async def create_qr_code(
     user: User = Depends(auth_service.get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    photo = await get_photo(photo_id, db)
+    photo = await get_photo(photo_id, user, db)
     if not photo or photo.user_id != user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found or access denied")
     

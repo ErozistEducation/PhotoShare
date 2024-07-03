@@ -1,7 +1,9 @@
 import contextlib
-from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
 
 from src.conf.config import config
+
 
 
 class DatabaseSessionManager:
