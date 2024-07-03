@@ -1,3 +1,5 @@
+import os
+import uvicorn
 from pathlib import Path
 from contextlib import asynccontextmanager
 import redis.asyncio as redis
@@ -8,7 +10,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi_limiter import FastAPILimiter
 
-from src.routes import auth, users, photos, comments, posts
+
+from src.database.db import get_db
+from src.routes import  auth, users, photos, comments, posts
 from src.conf.config import config
 
 @asynccontextmanager
@@ -50,7 +54,18 @@ templates = Jinja2Templates(directory=BASE_DIR / "src" / "templates")
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
+    """
+    The index function renders the index.html template and returns it as an HTML response.
+
+    :param request: Request: The incoming HTTP request
+    :return: A TemplateResponse object containing the rendered HTML template
+    :doc-author: Trelent
+    """
     return templates.TemplateResponse(
         "index.html", {"request": request, "our": "Build group"}
     )
 
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8000)), log_level="info")
+    
