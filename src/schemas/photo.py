@@ -14,7 +14,7 @@ class PhotoCreate(PhotoBase):
 
 class PhotoUpdate(BaseModel):
     description: Optional[str] = None
-
+    tags: Optional[List[str]] = None
 
 class TagBase(BaseModel):
     id: int

@@ -2,16 +2,21 @@ import io
 import logging
 import qrcode
 from typing import Dict, List
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 
-from src.entity.models import Photo, Tag, User
+from src.entity.models import Photo, Tag, User, Role
 from src.schemas.photo import PhotoCreate, PhotoUpdate
 
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
+
+
+def is_admin(user: User) -> bool:
+    return user.role == 'admin'
 
 
 async def create_photo(photo_data: PhotoCreate, user: User, db: AsyncSession):
@@ -49,17 +54,35 @@ async def update_photo(photo_id: int, photo_data: PhotoUpdate, user: User, db: A
     :param db: AsyncSession: The database session to use for the operation
     :return: The updated photo object
     """
-    stmt = select(Photo).filter_by(id=photo_id, user_id=user.id).options(joinedload(Photo.tags))
+    stmt = select(Photo).filter_by(id=photo_id).options(joinedload(Photo.tags))
+    if user.role != Role.admin:
+        stmt = stmt.filter_by(user_id=user.id)
     result = await db.execute(stmt)
     photo = result.unique().scalar_one_or_none()
     if photo:
-        photo.description = photo_data.description
+        if photo_data.description is not None:
+            photo.description = photo_data.description
+
+        if photo_data.tags is not None:
+            photo.tags = []
+            for tag_name in photo_data.tags:
+                tag_result = await db.execute(select(Tag).filter_by(name=tag_name))
+                existing_tag = tag_result.scalar_one_or_none()
+                if existing_tag:
+                    photo.tags.append(existing_tag)
+                else:
+                    new_tag = Tag(name=tag_name)
+                    db.add(new_tag)
+                    await db.flush()
+                    photo.tags.append(new_tag)
         await db.commit()
         await db.refresh(photo)
-    return photo
+        return photo
+    else:
+        return None
 
 
-async def delete_photo(photo_id: int, user: User, db: AsyncSession):
+async def delete_photo_handler(photo_id: int, user: User, db: AsyncSession):
     """
     The delete_photo function deletes an existing photo from the database.
 
@@ -68,12 +91,16 @@ async def delete_photo(photo_id: int, user: User, db: AsyncSession):
     :param db: AsyncSession: The database session to use for the operation
     :return: The deleted photo object
     """
-    stmt = select(Photo).filter_by(id=photo_id, user_id=user.id).options(joinedload(Photo.tags))
+    stmt = select(Photo).filter_by(id=photo_id)
+    if user.role != Role.admin:
+        stmt = stmt.filter_by(user_id=user.id)
     result = await db.execute(stmt)
     photo = result.unique().scalar_one_or_none()
-    if photo:
-        await db.delete(photo)
-        await db.commit()
+    if not photo:
+        return None
+
+    await db.delete(photo)
+    await db.commit()
     return photo
 
 
@@ -99,10 +126,13 @@ async def get_photos(user: User, db: AsyncSession):
     :param db: AsyncSession: The database session to use for the operation
     :return: A list of photo objects
     """
-    stmt = select(Photo).filter_by(user_id=user.id).options(joinedload(Photo.tags))
-    result = await db.execute(stmt)
-    photos = result.unique().scalars().all()
-    return photos
+    photos_query = select(Photo).options(joinedload(Photo.tags))
+
+    if user.role != Role.admin:
+        photos_query= photos_query.filter_by(user_id=user.id)
+
+    photos = await db.execute(photos_query)
+    return photos.unique().scalars().all()
 
 
 async def add_tags_to_photo(photo_id: int, tags: List[str], user: User, db: AsyncSession):
